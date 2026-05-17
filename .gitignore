@@ -22,7 +22,13 @@ env/
 #   python crawler.py "<group>"
 #   python stats.py data/<group-slug>
 #   python web/build.py data/<group-slug>/database.json
-data/
+#
+# Everything under data/ is ignored EXCEPT database.json files. Committing
+# those lets a CI job rebuild the static site without re-crawling.
+data/*
+!data/*/
+data/*/*
+!data/*/database.json
 web/dist/
 
 # Logs
