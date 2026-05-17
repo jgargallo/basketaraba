@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+
+# Virtualenvs
+.venv/
+venv/
+env/
+
+# Editors / OS
+.DS_Store
+.idea/
+.vscode/
+*.swp
+
+# Generated data — regenerable with the pipeline:
+#   python crawler.py "<group>"
+#   python stats.py data/<group-slug>
+#   python web/build.py data/<group-slug>/database.json
+data/
+web/dist/
+
+# Logs
+*.log

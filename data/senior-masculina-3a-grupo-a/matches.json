@@ -9,6 +9,26 @@
     {
       "jornada": 1,
       "monday": "2025-10-06",
+      "home_team_id": "686cca04d8058",
+      "away_team_id": "68712eb48615f",
+      "source": "calendar",
+      "partido_id": "",
+      "home_team": "AGURAIN SASKIBALOIA C",
+      "away_team": "C.B.MAKOAK",
+      "home_score": 50,
+      "away_score": 57,
+      "status": "FINALIZADO",
+      "venue": null,
+      "starts_at": null,
+      "home_logo": "AGURAIN.png",
+      "away_logo": "MAKOAK.png"
+    },
+    {
+      "jornada": 1,
+      "monday": "2025-10-06",
+      "home_team_id": "6870fef918360",
+      "away_team_id": "687574006480e",
+      "source": "jornada",
       "partido_id": "68c807c325015",
       "home_team": "BAR MANAOS LAKUA",
       "away_team": "CD EUREKA",
@@ -16,11 +36,16 @@
       "away_score": 53,
       "status": "FINALIZADO",
       "venue": "POL. IBAIONDO",
-      "starts_at": "11/10/2025"
+      "starts_at": "11/10/2025",
+      "home_logo": "AUKAL BASKET C.D..png",
+      "away_logo": "EUREKA.png"
     },
     {
       "jornada": 1,
       "monday": "2025-10-06",
+      "home_team_id": "6888bc940b89d",
+      "away_team_id": "685fb8deb4af0",
+      "source": "jornada",
       "partido_id": "68c807c325029",
       "home_team": "ATZURRA SUGOIAK",
       "away_team": "VENTACLIM SUGARRAK LAUDIO",
@@ -28,11 +53,16 @@
       "away_score": 57,
       "status": "FINALIZADO",
       "venue": "SAN ANDRES",
-      "starts_at": "11/10/2025 17:45"
+      "starts_at": "11/10/2025 17:45",
+      "home_logo": "GASTEIZKO ATZURRA.png",
+      "away_logo": "SUGARRAK LAUDIO.png"
     },
     {
       "jornada": 1,
       "monday": "2025-10-06",
+      "home_team_id": "685a434d7e4f5",
+      "away_team_id": "687d5fa5971a5",
+      "source": "jornada",
       "partido_id": "68c807c32502c",
       "home_team": "I4A",
       "away_team": "KANGRETX LEGENDS",
@@ -40,11 +70,16 @@
       "away_score": 69,
       "status": "FINALIZADO",
       "venue": "LANDAZURI",
-      "starts_at": "12/10/2025 09:00"
+      "starts_at": "12/10/2025 09:00",
+      "home_logo": "MAKEIJAN.png",
+      "away_logo": "KANGRETX ARABA.png"
     },
     {
       "jornada": 1,
       "monday": "2025-10-06",
+      "home_team_id": "68592b4b077f6",
+      "away_team_id": "6878eea4ae15a",
+      "source": "jornada",
       "partido_id": "68c807c325020",
       "home_team": "POZO I. MOICAR",
       "away_team": "VIAJES OLARIZU",
@@ -52,11 +87,16 @@
       "away_score": 67,
       "status": "FINALIZADO",
       "venue": "POL. IBAIONDO",
-      "starts_at": "12/10/2025 10:45"
+      "starts_at": "12/10/2025 10:45",
+      "home_logo": "POZO I. MOICAR.png",
+      "away_logo": "VIAJES OLARIZU.png"
     },
     {
       "jornada": 1,
       "monday": "2025-10-06",
+      "home_team_id": "6853f3406e213",
+      "away_team_id": "687fb92515d72",
+      "source": "jornada",
       "partido_id": "",
       "home_team": "GAZALBIDE A",
       "away_team": "ANBOTO JATETXEA",
@@ -64,11 +104,16 @@
       "away_score": 46,
       "status": "FINALIZADO",
       "venue": "SAN VIATOR",
-      "starts_at": "12/10/2025 17:00"
+      "starts_at": "12/10/2025 17:00",
+      "home_logo": "FRANJA DE GAZALBIDE C.B..png",
+      "away_logo": "AKBA2 C.D.B..png"
     },
     {
       "jornada": 2,
       "monday": "2025-10-13",
+      "home_team_id": "68712eb48615f",
+      "away_team_id": "6888bc940b89d",
+      "source": "jornada",
       "partido_id": "68c807c327fa8",
       "home_team": "C.B.MAKOAK",
       "away_team": "ATZURRA SUGOIAK",
@@ -76,11 +121,16 @@
       "away_score": 48,
       "status": "FINALIZADO",
       "venue": "LANDAZURI",
-      "starts_at": "18/10/2025 16:00"
+      "starts_at": "18/10/2025 16:00",
+      "home_logo": "MAKOAK.png",
+      "away_logo": "GASTEIZKO ATZURRA.png"
     },
     {
       "jornada": 2,
       "monday": "2025-10-13",
+      "home_team_id": "685fb8deb4af0",
+      "away_team_id": "685a434d7e4f5",
+      "source": "jornada",
       "partido_id": "68c807c327fa5",
       "home_team": "VENTACLIM SUGARRAK LAUDIO",
       "away_team": "I4A",
@@ -88,11 +138,16 @@
       "away_score": 58,
       "status": "FINALIZADO",
       "venue": "LA GRANJA",
-      "starts_at": "19/10/2025"
+      "starts_at": "19/10/2025",
+      "home_logo": "SUGARRAK LAUDIO.png",
+      "away_logo": "MAKEIJAN.png"
     },
     {
       "jornada": 2,
       "monday": "2025-10-13",
+      "home_team_id": "687fb92515d72",
+      "away_team_id": "686cca04d8058",
+      "source": "jornada",
       "partido_id": "68c807c327fa9",
       "home_team": "ANBOTO JATETXEA",
       "away_team": "AGURAIN SASKIBALOIA C",
@@ -100,11 +155,16 @@
       "away_score": 49,
       "status": "FINALIZADO",
       "venue": "POL. IBAIONDO",
-      "starts_at": "19/10/2025 10:45"
+      "starts_at": "19/10/2025 10:45",
+      "home_logo": "AKBA2 C.D.B..png",
+      "away_logo": "AGURAIN.png"
     },
     {
       "jornada": 2,
       "monday": "2025-10-13",
+      "home_team_id": "687574006480e",
+      "away_team_id": "68592b4b077f6",
+      "source": "jornada",
       "partido_id": "68c807c327fae",
       "home_team": "CD EUREKA",
       "away_team": "POZO I. MOICAR",
@@ -112,11 +172,16 @@
       "away_score": 35,
       "status": "FINALIZADO",
       "venue": "POL. IBAIONDO",
-      "starts_at": "19/10/2025 10:45"
+      "starts_at": "19/10/2025 10:45",
+      "home_logo": "EUREKA.png",
+      "away_logo": "POZO I. MOICAR.png"
     },
     {
       "jornada": 2,
       "monday": "2025-10-13",
+      "home_team_id": "687d5fa5971a5",
+      "away_team_id": "6870fef918360",
+      "source": "jornada",
       "partido_id": "68c807c327fa1",
       "home_team": "KANGRETX LEGENDS",
       "away_team": "BAR MANAOS LAKUA",
@@ -124,11 +189,16 @@
       "away_score": 40,
       "status": "FINALIZADO",
       "venue": "POL. IBAIONDO",
-      "starts_at": "19/10/2025 16:00"
+      "starts_at": "19/10/2025 16:00",
+      "home_logo": "KANGRETX ARABA.png",
+      "away_logo": "AUKAL BASKET C.D..png"
     },
     {
       "jornada": 2,
       "monday": "2025-10-13",
+      "home_team_id": "6878eea4ae15a",
+      "away_team_id": "6853f3406e213",
+      "source": "jornada",
       "partido_id": "68c807c327fac",
       "home_team": "VIAJES OLARIZU",
       "away_team": "GAZALBIDE A",
@@ -136,11 +206,16 @@
       "away_score": 60,
       "status": "FINALIZADO",
       "venue": "POL. IBAIONDO",
-      "starts_at": "19/10/2025 19:30"
+      "starts_at": "19/10/2025 19:30",
+      "home_logo": "VIAJES OLARIZU.png",
+      "away_logo": "FRANJA DE GAZALBIDE C.B..png"
     },
     {
       "jornada": 3,
       "monday": "2025-10-20",
+      "home_team_id": "687d5fa5971a5",
+      "away_team_id": "685fb8deb4af0",
+      "source": "jornada",
       "partido_id": "68c807c32ac83",
       "home_team": "KANGRETX LEGENDS",
       "away_team": "VENTACLIM SUGARRAK LAUDIO",
@@ -148,11 +223,16 @@
       "away_score": 44,
       "status": "FINALIZADO",
       "venue": "POL. IBAIONDO",
-      "starts_at": "25/10/2025 17:45"
+      "starts_at": "25/10/2025 17:45",
+      "home_logo": "KANGRETX ARABA.png",
+      "away_logo": "SUGARRAK LAUDIO.png"
     },
     {
       "jornada": 3,
       "monday": "2025-10-20",
+      "home_team_id": "686cca04d8058",
+      "away_team_id": "6878eea4ae15a",
+      "source": "jornada",
       "partido_id": "68c807c32ac7c",
       "home_team": "AGURAIN SASKIBALOIA C",
       "away_team": "VIAJES OLARIZU",
@@ -160,11 +240,16 @@
       "away_score": 59,
       "status": "FINALIZADO",
       "venue": "ARRAZPI BERRI",
-      "starts_at": "25/10/2025 18:45"
+      "starts_at": "25/10/2025 18:45",
+      "home_logo": "AGURAIN.png",
+      "away_logo": "VIAJES OLARIZU.png"
     },
     {
       "jornada": 3,
       "monday": "2025-10-20",
+      "home_team_id": "6888bc940b89d",
+      "away_team_id": "687fb92515d72",
+      "source": "jornada",
       "partido_id": "68c807c32ac7e",
       "home_team": "ATZURRA SUGOIAK",
       "away_team": "ANBOTO JATETXEA",
@@ -172,11 +257,16 @@
       "away_score": 48,
       "status": "FINALIZADO",
       "venue": "POL. IBAIONDO",
-      "starts_at": "25/10/2025 19:30"
+      "starts_at": "25/10/2025 19:30",
+      "home_logo": "GASTEIZKO ATZURRA.png",
+      "away_logo": "AKBA2 C.D.B..png"
     },
     {
       "jornada": 3,
       "monday": "2025-10-20",
+      "home_team_id": "6870fef918360",
+      "away_team_id": "68592b4b077f6",
+      "source": "jornada",
       "partido_id": "68c807c32ac75",
       "home_team": "BAR MANAOS LAKUA",
       "away_team": "POZO I. MOICAR",
@@ -184,11 +274,16 @@
       "away_score": 46,
       "status": "FINALIZADO",
       "venue": "POL. IBAIONDO",
-      "starts_at": "26/10/2025"
+      "starts_at": "26/10/2025",
+      "home_logo": "AUKAL BASKET C.D..png",
+      "away_logo": "POZO I. MOICAR.png"
     },
     {
       "jornada": 3,
       "monday": "2025-10-20",
+      "home_team_id": "6853f3406e213",
+      "away_team_id": "687574006480e",
+      "source": "jornada",
       "partido_id": "68c807c32ac79",
       "home_team": "GAZALBIDE A",
       "away_team": "CD EUREKA",
@@ -196,11 +291,16 @@
       "away_score": 33,
       "status": "FINALIZADO",
       "venue": "SAN VIATOR",
-      "starts_at": "26/10/2025 12:30"
+      "starts_at": "26/10/2025 12:30",
+      "home_logo": "FRANJA DE GAZALBIDE C.B..png",
+      "away_logo": "EUREKA.png"
     },
     {
       "jornada": 3,
       "monday": "2025-10-20",
+      "home_team_id": "685a434d7e4f5",
+      "away_team_id": "68712eb48615f",
+      "source": "jornada",
       "partido_id": "68c807c32ac81",
       "home_team": "I4A",
       "away_team": "C.B.MAKOAK",
@@ -208,11 +308,16 @@
       "away_score": 64,
       "status": "FINALIZADO",
       "venue": "L.0.3.",
-      "starts_at": "26/10/2025 17:45"
+      "starts_at": "26/10/2025 17:45",
+      "home_logo": "MAKEIJAN.png",
+      "away_logo": "MAKOAK.png"
     },
     {
       "jornada": 4,
       "monday": "2025-11-03",
+      "home_team_id": "68712eb48615f",
+      "away_team_id": "687d5fa5971a5",
+      "source": "jornada",
       "partido_id": "68c807c32d4e1",
       "home_team": "C.B.MAKOAK",
       "away_team": "KANGRETX LEGENDS",
@@ -220,11 +325,16 @@
       "away_score": 52,
       "status": "FINALIZADO",
       "venue": "SAN ANDRES",
-      "starts_at": "08/11/2025 19:30"
+      "starts_at": "08/11/2025 19:30",
+      "home_logo": "MAKOAK.png",
+      "away_logo": "KANGRETX ARABA.png"
     },
     {
       "jornada": 4,
       "monday": "2025-11-03",
+      "home_team_id": "68592b4b077f6",
+      "away_team_id": "6853f3406e213",
+      "source": "jornada",
       "partido_id": "68c807c32d4e7",
       "home_team": "POZO I. MOICAR",
       "away_team": "GAZALBIDE A",
@@ -232,11 +342,16 @@
       "away_score": 70,
       "status": "FINALIZADO",
       "venue": "POL. IBAIONDO",
-      "starts_at": "09/11/2025 09:00"
+      "starts_at": "09/11/2025 09:00",
+      "home_logo": "POZO I. MOICAR.png",
+      "away_logo": "FRANJA DE GAZALBIDE C.B..png"
     },
     {
       "jornada": 4,
       "monday": "2025-11-03",
+      "home_team_id": "685fb8deb4af0",
+      "away_team_id": "6870fef918360",
+      "source": "jornada",
       "partido_id": "",
       "home_team": "VENTACLIM SUGARRAK LAUDIO",
       "away_team": "BAR MANAOS LAKUA",
@@ -244,11 +359,16 @@
       "away_score": 51,
       "status": "FINALIZADO",
       "venue": "LA GRANJA",
-      "starts_at": "09/11/2025 16:00"
+      "starts_at": "09/11/2025 16:00",
+      "home_logo": "SUGARRAK LAUDIO.png",
+      "away_logo": "AUKAL BASKET C.D..png"
     },
     {
       "jornada": 4,
       "monday": "2025-11-03",
+      "home_team_id": "687fb92515d72",
+      "away_team_id": "685a434d7e4f5",
+      "source": "jornada",
       "partido_id": "68c807c32d4e3",
       "home_team": "ANBOTO JATETXEA",
       "away_team": "I4A",
@@ -256,11 +376,16 @@
       "away_score": 50,
       "status": "FINALIZADO",
       "venue": "L.0.3.",
-      "starts_at": "09/11/2025 16:00"
+      "starts_at": "09/11/2025 16:00",
+      "home_logo": "AKBA2 C.D.B..png",
+      "away_logo": "MAKEIJAN.png"
     },
     {
       "jornada": 4,
       "monday": "2025-11-03",
+      "home_team_id": "6878eea4ae15a",
+      "away_team_id": "6888bc940b89d",
+      "source": "jornada",
       "partido_id": "68c807c32d4e5",
       "home_team": "VIAJES OLARIZU",
       "away_team": "ATZURRA SUGOIAK",
@@ -268,11 +393,16 @@
       "away_score": 47,
       "status": "FINALIZADO",
       "venue": "L.0.3.",
-      "starts_at": "09/11/2025 17:45"
+      "starts_at": "09/11/2025 17:45",
+      "home_logo": "VIAJES OLARIZU.png",
+      "away_logo": "GASTEIZKO ATZURRA.png"
     },
     {
       "jornada": 4,
       "monday": "2025-11-03",
+      "home_team_id": "687574006480e",
+      "away_team_id": "686cca04d8058",
+      "source": "jornada",
       "partido_id": "68c807c32d4e6",
       "home_team": "CD EUREKA",
       "away_team": "AGURAIN SASKIBALOIA C",
@@ -280,11 +410,33 @@
       "away_score": 53,
       "status": "FINALIZADO",
       "venue": "POL. IBAIONDO",
-      "starts_at": "09/11/2025 19:30"
+      "starts_at": "09/11/2025 19:30",
+      "home_logo": "EUREKA.png",
+      "away_logo": "AGURAIN.png"
     },
     {
       "jornada": 5,
       "monday": "2025-11-10",
+      "home_team_id": "686cca04d8058",
+      "away_team_id": "68592b4b077f6",
+      "source": "calendar",
+      "partido_id": "",
+      "home_team": "AGURAIN SASKIBALOIA C",
+      "away_team": "POZO I. MOICAR",
+      "home_score": 3,
+      "away_score": 2,
+      "status": "FINALIZADO",
+      "venue": null,
+      "starts_at": null,
+      "home_logo": "AGURAIN.png",
+      "away_logo": "POZO I. MOICAR.png"
+    },
+    {
+      "jornada": 5,
+      "monday": "2025-11-10",
+      "home_team_id": "6870fef918360",
+      "away_team_id": "6853f3406e213",
+      "source": "jornada",
       "partido_id": "68c807c32fbfa",
       "home_team": "BAR MANAOS LAKUA",
       "away_team": "GAZALBIDE A",
@@ -292,11 +444,16 @@
       "away_score": 65,
       "status": "FINALIZADO",
       "venue": "POL. IBAIONDO",
-      "starts_at": "16/11/2025"
+      "starts_at": "16/11/2025",
+      "home_logo": "AUKAL BASKET C.D..png",
+      "away_logo": "FRANJA DE GAZALBIDE C.B..png"
     },
     {
       "jornada": 5,
       "monday": "2025-11-10",
+      "home_team_id": "6888bc940b89d",
+      "away_team_id": "687574006480e",
+      "source": "jornada",
       "partido_id": "68c807c32fc00",
       "home_team": "ATZURRA SUGOIAK",
       "away_team": "CD EUREKA",
@@ -304,11 +461,16 @@
       "away_score": 41,
       "status": "FINALIZADO",
       "venue": "POL. IBAIONDO",
-      "starts_at": "16/11/2025 09:00"
+      "starts_at": "16/11/2025 09:00",
+      "home_logo": "GASTEIZKO ATZURRA.png",
+      "away_logo": "EUREKA.png"
     },
     {
       "jornada": 5,
       "monday": "2025-11-10",
+      "home_team_id": "687d5fa5971a5",
+      "away_team_id": "687fb92515d72",
+      "source": "jornada",
       "partido_id": "68c807c32fc03",
       "home_team": "KANGRETX LEGENDS",
       "away_team": "ANBOTO JATETXEA",
@@ -316,11 +478,16 @@
       "away_score": 40,
       "status": "FINALIZADO",
       "venue": "POL. IBAIONDO",
-      "starts_at": "16/11/2025 09:00"
+      "starts_at": "16/11/2025 09:00",
+      "home_logo": "KANGRETX ARABA.png",
+      "away_logo": "AKBA2 C.D.B..png"
     },
     {
       "jornada": 5,
       "monday": "2025-11-10",
+      "home_team_id": "685a434d7e4f5",
+      "away_team_id": "6878eea4ae15a",
+      "source": "jornada",
       "partido_id": "68c807c32fc01",
       "home_team": "I4A",
       "away_team": "VIAJES OLARIZU",
@@ -328,11 +495,16 @@
       "away_score": 70,
       "status": "FINALIZADO",
       "venue": "L.0.3.",
-      "starts_at": "16/11/2025 16:00"
+      "starts_at": "16/11/2025 16:00",
+      "home_logo": "MAKEIJAN.png",
+      "away_logo": "VIAJES OLARIZU.png"
     },
     {
       "jornada": 5,
       "monday": "2025-11-10",
+      "home_team_id": "685fb8deb4af0",
+      "away_team_id": "68712eb48615f",
+      "source": "jornada",
       "partido_id": "68c807c32fc04",
       "home_team": "VENTACLIM SUGARRAK LAUDIO",
       "away_team": "C.B.MAKOAK",
@@ -340,11 +512,16 @@
       "away_score": 48,
       "status": "FINALIZADO",
       "venue": "LA GRANJA",
-      "starts_at": "16/11/2025 16:00"
+      "starts_at": "16/11/2025 16:00",
+      "home_logo": "SUGARRAK LAUDIO.png",
+      "away_logo": "MAKOAK.png"
     },
     {
       "jornada": 6,
       "monday": "2025-11-17",
+      "home_team_id": "6853f3406e213",
+      "away_team_id": "686cca04d8058",
+      "source": "jornada",
       "partido_id": "68c807c33229f",
       "home_team": "GAZALBIDE A",
       "away_team": "AGURAIN SASKIBALOIA C",
@@ -352,11 +529,16 @@
       "away_score": 29,
       "status": "FINALIZADO",
       "venue": "SAN VIATOR",
-      "starts_at": "22/11/2025 19:30"
+      "starts_at": "22/11/2025 19:30",
+      "home_logo": "FRANJA DE GAZALBIDE C.B..png",
+      "away_logo": "AGURAIN.png"
     },
     {
       "jornada": 6,
       "monday": "2025-11-17",
+      "home_team_id": "68592b4b077f6",
+      "away_team_id": "6888bc940b89d",
+      "source": "jornada",
       "partido_id": "68c807c33229d",
       "home_team": "POZO I. MOICAR",
       "away_team": "ATZURRA SUGOIAK",
@@ -364,11 +546,16 @@
       "away_score": 58,
       "status": "FINALIZADO",
       "venue": "LANDAZURI",
-      "starts_at": "23/11/2025 09:00"
+      "starts_at": "23/11/2025 09:00",
+      "home_logo": "POZO I. MOICAR.png",
+      "away_logo": "GASTEIZKO ATZURRA.png"
     },
     {
       "jornada": 6,
       "monday": "2025-11-17",
+      "home_team_id": "68712eb48615f",
+      "away_team_id": "6870fef918360",
+      "source": "jornada",
       "partido_id": "68c807c332294",
       "home_team": "C.B.MAKOAK",
       "away_team": "BAR MANAOS LAKUA",
@@ -376,11 +563,16 @@
       "away_score": 52,
       "status": "FINALIZADO",
       "venue": "ARANALDE",
-      "starts_at": "23/11/2025 16:00"
+      "starts_at": "23/11/2025 16:00",
+      "home_logo": "MAKOAK.png",
+      "away_logo": "AUKAL BASKET C.D..png"
     },
     {
       "jornada": 6,
       "monday": "2025-11-17",
+      "home_team_id": "687574006480e",
+      "away_team_id": "685a434d7e4f5",
+      "source": "jornada",
       "partido_id": "68c807c33229c",
       "home_team": "CD EUREKA",
       "away_team": "I4A",
@@ -388,11 +580,16 @@
       "away_score": 59,
       "status": "FINALIZADO",
       "venue": "ARANALDE",
-      "starts_at": "23/11/2025 16:00"
+      "starts_at": "23/11/2025 16:00",
+      "home_logo": "EUREKA.png",
+      "away_logo": "MAKEIJAN.png"
     },
     {
       "jornada": 6,
       "monday": "2025-11-17",
+      "home_team_id": "687fb92515d72",
+      "away_team_id": "685fb8deb4af0",
+      "source": "jornada",
       "partido_id": "68c807c332298",
       "home_team": "ANBOTO JATETXEA",
       "away_team": "VENTACLIM SUGARRAK LAUDIO",
@@ -400,11 +597,16 @@
       "away_score": 67,
       "status": "FINALIZADO",
       "venue": "ARANALDE",
-      "starts_at": "23/11/2025 19:30"
+      "starts_at": "23/11/2025 19:30",
+      "home_logo": "AKBA2 C.D.B..png",
+      "away_logo": "SUGARRAK LAUDIO.png"
     },
     {
       "jornada": 6,
       "monday": "2025-11-17",
+      "home_team_id": "6878eea4ae15a",
+      "away_team_id": "687d5fa5971a5",
+      "source": "jornada",
       "partido_id": "68c807c33229a",
       "home_team": "VIAJES OLARIZU",
       "away_team": "KANGRETX LEGENDS",
@@ -412,11 +614,16 @@
       "away_score": 74,
       "status": "FINALIZADO",
       "venue": "ARANALDE",
-      "starts_at": "23/11/2025 19:30"
+      "starts_at": "23/11/2025 19:30",
+      "home_logo": "VIAJES OLARIZU.png",
+      "away_logo": "KANGRETX ARABA.png"
     },
     {
       "jornada": 7,
       "monday": "2025-11-24",
+      "home_team_id": "6888bc940b89d",
+      "away_team_id": "6853f3406e213",
+      "source": "jornada",
       "partido_id": "68c807c334a62",
       "home_team": "ATZURRA SUGOIAK",
       "away_team": "GAZALBIDE A",
@@ -424,11 +631,16 @@
       "away_score": 60,
       "status": "FINALIZADO",
       "venue": "POL. IBAIONDO",
-      "starts_at": "29/11/2025 19:00"
+      "starts_at": "29/11/2025 19:00",
+      "home_logo": "GASTEIZKO ATZURRA.png",
+      "away_logo": "FRANJA DE GAZALBIDE C.B..png"
     },
     {
       "jornada": 7,
       "monday": "2025-11-24",
+      "home_team_id": "68712eb48615f",
+      "away_team_id": "687fb92515d72",
+      "source": "jornada",
       "partido_id": "68c807c334a66",
       "home_team": "C.B.MAKOAK",
       "away_team": "ANBOTO JATETXEA",
@@ -436,11 +648,16 @@
       "away_score": 41,
       "status": "FINALIZADO",
       "venue": "POL. IBAIONDO",
-      "starts_at": "29/11/2025 19:30"
+      "starts_at": "29/11/2025 19:30",
+      "home_logo": "MAKOAK.png",
+      "away_logo": "AKBA2 C.D.B..png"
     },
     {
       "jornada": 7,
       "monday": "2025-11-24",
+      "home_team_id": "6870fef918360",
+      "away_team_id": "686cca04d8058",
+      "source": "jornada",
       "partido_id": "",
       "home_team": "BAR MANAOS LAKUA",
       "away_team": "AGURAIN SASKIBALOIA C",
@@ -448,11 +665,16 @@
       "away_score": 0,
       "status": "SUSPENDIDO",
       "venue": "LANDAZURI",
-      "starts_at": "30/11/2025"
+      "starts_at": "30/11/2025",
+      "home_logo": "AUKAL BASKET C.D..png",
+      "away_logo": "AGURAIN.png"
     },
     {
       "jornada": 7,
       "monday": "2025-11-24",
+      "home_team_id": "687d5fa5971a5",
+      "away_team_id": "687574006480e",
+      "source": "jornada",
       "partido_id": "68c807c334a64",
       "home_team": "KANGRETX LEGENDS",
       "away_team": "CD EUREKA",
@@ -460,11 +682,16 @@
       "away_score": 33,
       "status": "FINALIZADO",
       "venue": "ARANALDE",
-      "starts_at": "30/11/2025 16:00"
+      "starts_at": "30/11/2025 16:00",
+      "home_logo": "KANGRETX ARABA.png",
+      "away_logo": "EUREKA.png"
     },
     {
       "jornada": 7,
       "monday": "2025-11-24",
+      "home_team_id": "685fb8deb4af0",
+      "away_team_id": "6878eea4ae15a",
+      "source": "jornada",
       "partido_id": "",
       "home_team": "VENTACLIM SUGARRAK LAUDIO",
       "away_team": "VIAJES OLARIZU",
@@ -472,11 +699,16 @@
       "away_score": 48,
       "status": "FINALIZADO",
       "venue": "LA GRANJA",
-      "starts_at": "30/11/2025 16:00"
+      "starts_at": "30/11/2025 16:00",
+      "home_logo": "SUGARRAK LAUDIO.png",
+      "away_logo": "VIAJES OLARIZU.png"
     },
     {
       "jornada": 7,
       "monday": "2025-11-24",
+      "home_team_id": "685a434d7e4f5",
+      "away_team_id": "68592b4b077f6",
+      "source": "jornada",
       "partido_id": "68c807c334a63",
       "home_team": "I4A",
       "away_team": "POZO I. MOICAR",
@@ -484,11 +716,16 @@
       "away_score": 42,
       "status": "FINALIZADO",
       "venue": "POL. IBAIONDO",
-      "starts_at": "30/11/2025 19:30"
+      "starts_at": "30/11/2025 19:30",
+      "home_logo": "MAKEIJAN.png",
+      "away_logo": "POZO I. MOICAR.png"
     },
     {
       "jornada": 8,
       "monday": "2025-12-08",
+      "home_team_id": "6853f3406e213",
+      "away_team_id": "685a434d7e4f5",
+      "source": "jornada",
       "partido_id": "68c807c3370fd",
       "home_team": "GAZALBIDE A",
       "away_team": "I4A",
@@ -496,11 +733,16 @@
       "away_score": 54,
       "status": "FINALIZADO",
       "venue": "SAN VIATOR",
-      "starts_at": "13/12/2025 18:00"
+      "starts_at": "13/12/2025 18:00",
+      "home_logo": "FRANJA DE GAZALBIDE C.B..png",
+      "away_logo": "MAKEIJAN.png"
     },
     {
       "jornada": 8,
       "monday": "2025-12-08",
+      "home_team_id": "68592b4b077f6",
+      "away_team_id": "687d5fa5971a5",
+      "source": "jornada",
       "partido_id": "68c807c3370fc",
       "home_team": "POZO I. MOICAR",
       "away_team": "KANGRETX LEGENDS",
@@ -508,11 +750,16 @@
       "away_score": 67,
       "status": "FINALIZADO",
       "venue": "POL. IBAIONDO",
-      "starts_at": "14/12/2025 09:00"
+      "starts_at": "14/12/2025 09:00",
+      "home_logo": "POZO I. MOICAR.png",
+      "away_logo": "KANGRETX ARABA.png"
     },
     {
       "jornada": 8,
       "monday": "2025-12-08",
+      "home_team_id": "686cca04d8058",
+      "away_team_id": "6888bc940b89d",
+      "source": "jornada",
       "partido_id": "68c807c3370fe",
       "home_team": "AGURAIN SASKIBALOIA C",
       "away_team": "ATZURRA SUGOIAK",
@@ -520,11 +767,16 @@
       "away_score": 73,
       "status": "FINALIZADO",
       "venue": "POL. LEZAO",
-      "starts_at": "14/12/2025 10:15"
+      "starts_at": "14/12/2025 10:15",
+      "home_logo": "AGURAIN.png",
+      "away_logo": "GASTEIZKO ATZURRA.png"
     },
     {
       "jornada": 8,
       "monday": "2025-12-08",
+      "home_team_id": "687574006480e",
+      "away_team_id": "685fb8deb4af0",
+      "source": "jornada",
       "partido_id": "68c807c3370fb",
       "home_team": "CD EUREKA",
       "away_team": "VENTACLIM SUGARRAK LAUDIO",
@@ -532,11 +784,16 @@
       "away_score": 43,
       "status": "FINALIZADO",
       "venue": "POL. IBAIONDO",
-      "starts_at": "14/12/2025 12:30"
+      "starts_at": "14/12/2025 12:30",
+      "home_logo": "EUREKA.png",
+      "away_logo": "SUGARRAK LAUDIO.png"
     },
     {
       "jornada": 8,
       "monday": "2025-12-08",
+      "home_team_id": "687fb92515d72",
+      "away_team_id": "6870fef918360",
+      "source": "jornada",
       "partido_id": "68c807c3370f8",
       "home_team": "ANBOTO JATETXEA",
       "away_team": "BAR MANAOS LAKUA",
@@ -544,11 +801,16 @@
       "away_score": 39,
       "status": "FINALIZADO",
       "venue": "POL. IBAIONDO",
-      "starts_at": "14/12/2025 16:00"
+      "starts_at": "14/12/2025 16:00",
+      "home_logo": "AKBA2 C.D.B..png",
+      "away_logo": "AUKAL BASKET C.D..png"
     },
     {
       "jornada": 8,
       "monday": "2025-12-08",
+      "home_team_id": "6878eea4ae15a",
+      "away_team_id": "68712eb48615f",
+      "source": "jornada",
       "partido_id": "68c807c3370fa",
       "home_team": "VIAJES OLARIZU",
       "away_team": "C.B.MAKOAK",
@@ -556,11 +818,16 @@
       "away_score": 52,
       "status": "FINALIZADO",
       "venue": "POL. IBAIONDO",
-      "starts_at": "14/12/2025 16:00"
+      "starts_at": "14/12/2025 16:00",
+      "home_logo": "VIAJES OLARIZU.png",
+      "away_logo": "MAKOAK.png"
     },
     {
       "jornada": 9,
       "monday": "2025-12-15",
+      "home_team_id": "68712eb48615f",
+      "away_team_id": "687574006480e",
+      "source": "jornada",
       "partido_id": "68c807c3396d1",
       "home_team": "C.B.MAKOAK",
       "away_team": "CD EUREKA",
@@ -568,11 +835,16 @@
       "away_score": 37,
       "status": "FINALIZADO",
       "venue": "LANDAZURI",
-      "starts_at": "21/12/2025 09:00"
+      "starts_at": "21/12/2025 09:00",
+      "home_logo": "MAKOAK.png",
+      "away_logo": "EUREKA.png"
     },
     {
       "jornada": 9,
       "monday": "2025-12-15",
+      "home_team_id": "6870fef918360",
+      "away_team_id": "6888bc940b89d",
+      "source": "jornada",
       "partido_id": "68c807c3396cb",
       "home_team": "BAR MANAOS LAKUA",
       "away_team": "ATZURRA SUGOIAK",
@@ -580,11 +852,16 @@
       "away_score": 52,
       "status": "FINALIZADO",
       "venue": "LANDAZURI",
-      "starts_at": "21/12/2025 10:45"
+      "starts_at": "21/12/2025 10:45",
+      "home_logo": "AUKAL BASKET C.D..png",
+      "away_logo": "GASTEIZKO ATZURRA.png"
     },
     {
       "jornada": 9,
       "monday": "2025-12-15",
+      "home_team_id": "687fb92515d72",
+      "away_team_id": "6878eea4ae15a",
+      "source": "jornada",
       "partido_id": "68c807c3396d2",
       "home_team": "ANBOTO JATETXEA",
       "away_team": "VIAJES OLARIZU",
@@ -592,11 +869,16 @@
       "away_score": 57,
       "status": "FINALIZADO",
       "venue": "L.0.3.",
-      "starts_at": "21/12/2025 10:45"
+      "starts_at": "21/12/2025 10:45",
+      "home_logo": "AKBA2 C.D.B..png",
+      "away_logo": "VIAJES OLARIZU.png"
     },
     {
       "jornada": 9,
       "monday": "2025-12-15",
+      "home_team_id": "685fb8deb4af0",
+      "away_team_id": "68592b4b077f6",
+      "source": "jornada",
       "partido_id": "",
       "home_team": "VENTACLIM SUGARRAK LAUDIO",
       "away_team": "POZO I. MOICAR",
@@ -604,11 +886,16 @@
       "away_score": 2,
       "status": "FINALIZADO",
       "venue": "LA GRANJA",
-      "starts_at": "21/12/2025 16:00"
+      "starts_at": "21/12/2025 16:00",
+      "home_logo": "SUGARRAK LAUDIO.png",
+      "away_logo": "POZO I. MOICAR.png"
     },
     {
       "jornada": 9,
       "monday": "2025-12-15",
+      "home_team_id": "685a434d7e4f5",
+      "away_team_id": "686cca04d8058",
+      "source": "jornada",
       "partido_id": "68c807c3396ce",
       "home_team": "I4A",
       "away_team": "AGURAIN SASKIBALOIA C",
@@ -616,11 +903,16 @@
       "away_score": 55,
       "status": "FINALIZADO",
       "venue": "ARANALDE",
-      "starts_at": "21/12/2025 17:45"
+      "starts_at": "21/12/2025 17:45",
+      "home_logo": "MAKEIJAN.png",
+      "away_logo": "AGURAIN.png"
     },
     {
       "jornada": 9,
       "monday": "2025-12-15",
+      "home_team_id": "687d5fa5971a5",
+      "away_team_id": "6853f3406e213",
+      "source": "jornada",
       "partido_id": "68c807c3396cf",
       "home_team": "KANGRETX LEGENDS",
       "away_team": "GAZALBIDE A",
@@ -628,11 +920,16 @@
       "away_score": 38,
       "status": "FINALIZADO",
       "venue": "ARANALDE",
-      "starts_at": "21/12/2025 19:30"
+      "starts_at": "21/12/2025 19:30",
+      "home_logo": "KANGRETX ARABA.png",
+      "away_logo": "FRANJA DE GAZALBIDE C.B..png"
     },
     {
       "jornada": 10,
       "monday": "2026-01-05",
+      "home_team_id": "6853f3406e213",
+      "away_team_id": "685fb8deb4af0",
+      "source": "jornada",
       "partido_id": "68c807c33bd10",
       "home_team": "GAZALBIDE A",
       "away_team": "VENTACLIM SUGARRAK LAUDIO",
@@ -640,11 +937,16 @@
       "away_score": 57,
       "status": "FINALIZADO",
       "venue": "SAN VIATOR",
-      "starts_at": "10/01/2026 19:00"
+      "starts_at": "10/01/2026 19:00",
+      "home_logo": "FRANJA DE GAZALBIDE C.B..png",
+      "away_logo": "SUGARRAK LAUDIO.png"
     },
     {
       "jornada": 10,
       "monday": "2026-01-05",
+      "home_team_id": "687574006480e",
+      "away_team_id": "687fb92515d72",
+      "source": "jornada",
       "partido_id": "68c807c33bd0d",
       "home_team": "CD EUREKA",
       "away_team": "ANBOTO JATETXEA",
@@ -652,11 +954,16 @@
       "away_score": 53,
       "status": "FINALIZADO",
       "venue": "POL. IBAIONDO",
-      "starts_at": "10/01/2026 19:30"
+      "starts_at": "10/01/2026 19:30",
+      "home_logo": "EUREKA.png",
+      "away_logo": "AKBA2 C.D.B..png"
     },
     {
       "jornada": 10,
       "monday": "2026-01-05",
+      "home_team_id": "68592b4b077f6",
+      "away_team_id": "68712eb48615f",
+      "source": "jornada",
       "partido_id": "68c807c33bd0f",
       "home_team": "POZO I. MOICAR",
       "away_team": "C.B.MAKOAK",
@@ -664,11 +971,16 @@
       "away_score": 46,
       "status": "FINALIZADO",
       "venue": "LANDAZURI",
-      "starts_at": "11/01/2026 09:00"
+      "starts_at": "11/01/2026 09:00",
+      "home_logo": "POZO I. MOICAR.png",
+      "away_logo": "MAKOAK.png"
     },
     {
       "jornada": 10,
       "monday": "2026-01-05",
+      "home_team_id": "6870fef918360",
+      "away_team_id": "6878eea4ae15a",
+      "source": "jornada",
       "partido_id": "68c807c33bd0b",
       "home_team": "BAR MANAOS LAKUA",
       "away_team": "VIAJES OLARIZU",
@@ -676,11 +988,16 @@
       "away_score": 74,
       "status": "FINALIZADO",
       "venue": "POL. IBAIONDO",
-      "starts_at": "11/01/2026 10:45"
+      "starts_at": "11/01/2026 10:45",
+      "home_logo": "AUKAL BASKET C.D..png",
+      "away_logo": "VIAJES OLARIZU.png"
     },
     {
       "jornada": 10,
       "monday": "2026-01-05",
+      "home_team_id": "6888bc940b89d",
+      "away_team_id": "685a434d7e4f5",
+      "source": "jornada",
       "partido_id": "68c807c33bd13",
       "home_team": "ATZURRA SUGOIAK",
       "away_team": "I4A",
@@ -688,11 +1005,16 @@
       "away_score": 55,
       "status": "FINALIZADO",
       "venue": "LANDAZURI",
-      "starts_at": "11/01/2026 10:45"
+      "starts_at": "11/01/2026 10:45",
+      "home_logo": "GASTEIZKO ATZURRA.png",
+      "away_logo": "MAKEIJAN.png"
     },
     {
       "jornada": 10,
       "monday": "2026-01-05",
+      "home_team_id": "686cca04d8058",
+      "away_team_id": "687d5fa5971a5",
+      "source": "jornada",
       "partido_id": "68c807c33bd12",
       "home_team": "AGURAIN SASKIBALOIA C",
       "away_team": "KANGRETX LEGENDS",
@@ -700,11 +1022,16 @@
       "away_score": 66,
       "status": "FINALIZADO",
       "venue": "LEZAO POLIDEPORTIVO",
-      "starts_at": "11/01/2026 12:00"
+      "starts_at": "11/01/2026 12:00",
+      "home_logo": "AGURAIN.png",
+      "away_logo": "KANGRETX ARABA.png"
     },
     {
       "jornada": 11,
       "monday": "2026-01-12",
+      "home_team_id": "687fb92515d72",
+      "away_team_id": "68592b4b077f6",
+      "source": "jornada",
       "partido_id": "68c807c33e398",
       "home_team": "ANBOTO JATETXEA",
       "away_team": "POZO I. MOICAR",
@@ -712,11 +1039,16 @@
       "away_score": 48,
       "status": "FINALIZADO",
       "venue": "LANDAZURI",
-      "starts_at": "18/01/2026 09:00"
+      "starts_at": "18/01/2026 09:00",
+      "home_logo": "AKBA2 C.D.B..png",
+      "away_logo": "POZO I. MOICAR.png"
     },
     {
       "jornada": 11,
       "monday": "2026-01-12",
+      "home_team_id": "687d5fa5971a5",
+      "away_team_id": "6888bc940b89d",
+      "source": "jornada",
       "partido_id": "68c807c33e393",
       "home_team": "KANGRETX LEGENDS",
       "away_team": "ATZURRA SUGOIAK",
@@ -724,11 +1056,16 @@
       "away_score": 23,
       "status": "FINALIZADO",
       "venue": "LANDAZURI",
-      "starts_at": "18/01/2026 10:45"
+      "starts_at": "18/01/2026 10:45",
+      "home_logo": "KANGRETX ARABA.png",
+      "away_logo": "GASTEIZKO ATZURRA.png"
     },
     {
       "jornada": 11,
       "monday": "2026-01-12",
+      "home_team_id": "68712eb48615f",
+      "away_team_id": "6853f3406e213",
+      "source": "jornada",
       "partido_id": "68c807c33e396",
       "home_team": "C.B.MAKOAK",
       "away_team": "GAZALBIDE A",
@@ -736,11 +1073,16 @@
       "away_score": 57,
       "status": "FINALIZADO",
       "venue": "POL. IBAIONDO",
-      "starts_at": "18/01/2026 12:30"
+      "starts_at": "18/01/2026 12:30",
+      "home_logo": "MAKOAK.png",
+      "away_logo": "FRANJA DE GAZALBIDE C.B..png"
     },
     {
       "jornada": 11,
       "monday": "2026-01-12",
+      "home_team_id": "685a434d7e4f5",
+      "away_team_id": "6870fef918360",
+      "source": "jornada",
       "partido_id": "68c807c33e38d",
       "home_team": "I4A",
       "away_team": "BAR MANAOS LAKUA",
@@ -748,11 +1090,16 @@
       "away_score": 64,
       "status": "FINALIZADO",
       "venue": "POL. IBAIONDO",
-      "starts_at": "18/01/2026 16:00"
+      "starts_at": "18/01/2026 16:00",
+      "home_logo": "MAKEIJAN.png",
+      "away_logo": "AUKAL BASKET C.D..png"
     },
     {
       "jornada": 11,
       "monday": "2026-01-12",
+      "home_team_id": "685fb8deb4af0",
+      "away_team_id": "686cca04d8058",
+      "source": "jornada",
       "partido_id": "",
       "home_team": "VENTACLIM SUGARRAK LAUDIO",
       "away_team": "AGURAIN SASKIBALOIA C",
@@ -760,11 +1107,16 @@
       "away_score": 56,
       "status": "FINALIZADO",
       "venue": "LA GRANJA",
-      "starts_at": "18/01/2026 16:00"
+      "starts_at": "18/01/2026 16:00",
+      "home_logo": "SUGARRAK LAUDIO.png",
+      "away_logo": "AGURAIN.png"
     },
     {
       "jornada": 11,
       "monday": "2026-01-12",
+      "home_team_id": "6878eea4ae15a",
+      "away_team_id": "687574006480e",
+      "source": "jornada",
       "partido_id": "68c807c33e399",
       "home_team": "VIAJES OLARIZU",
       "away_team": "CD EUREKA",
@@ -772,11 +1124,16 @@
       "away_score": 39,
       "status": "FINALIZADO",
       "venue": "POL. IBAIONDO",
-      "starts_at": "18/01/2026 19:30"
+      "starts_at": "18/01/2026 19:30",
+      "home_logo": "VIAJES OLARIZU.png",
+      "away_logo": "EUREKA.png"
     },
     {
       "jornada": 12,
       "monday": "2026-01-19",
+      "home_team_id": "6878eea4ae15a",
+      "away_team_id": "68592b4b077f6",
+      "source": "jornada",
       "partido_id": "68c807c340afa",
       "home_team": "VIAJES OLARIZU",
       "away_team": "POZO I. MOICAR",
@@ -784,11 +1141,16 @@
       "away_score": 44,
       "status": "FINALIZADO",
       "venue": "POL. IBAIONDO",
-      "starts_at": "25/01/2026 09:00"
+      "starts_at": "25/01/2026 09:00",
+      "home_logo": "VIAJES OLARIZU.png",
+      "away_logo": "POZO I. MOICAR.png"
     },
     {
       "jornada": 12,
       "monday": "2026-01-19",
+      "home_team_id": "687574006480e",
+      "away_team_id": "6870fef918360",
+      "source": "jornada",
       "partido_id": "68c807c340af4",
       "home_team": "CD EUREKA",
       "away_team": "BAR MANAOS LAKUA",
@@ -796,11 +1158,16 @@
       "away_score": 32,
       "status": "FINALIZADO",
       "venue": "POL. IBAIONDO",
-      "starts_at": "25/01/2026 10:45"
+      "starts_at": "25/01/2026 10:45",
+      "home_logo": "EUREKA.png",
+      "away_logo": "AUKAL BASKET C.D..png"
     },
     {
       "jornada": 12,
       "monday": "2026-01-19",
+      "home_team_id": "687fb92515d72",
+      "away_team_id": "6853f3406e213",
+      "source": "jornada",
       "partido_id": "68c807c340afc",
       "home_team": "ANBOTO JATETXEA",
       "away_team": "GAZALBIDE A",
@@ -808,11 +1175,16 @@
       "away_score": 43,
       "status": "FINALIZADO",
       "venue": "POL. IBAIONDO",
-      "starts_at": "25/01/2026 12:30"
+      "starts_at": "25/01/2026 12:30",
+      "home_logo": "AKBA2 C.D.B..png",
+      "away_logo": "FRANJA DE GAZALBIDE C.B..png"
     },
     {
       "jornada": 12,
       "monday": "2026-01-19",
+      "home_team_id": "68712eb48615f",
+      "away_team_id": "686cca04d8058",
+      "source": "jornada",
       "partido_id": "68c807c340afd",
       "home_team": "C.B.MAKOAK",
       "away_team": "AGURAIN SASKIBALOIA C",
@@ -820,11 +1192,16 @@
       "away_score": 44,
       "status": "FINALIZADO",
       "venue": "LANDAZURI",
-      "starts_at": "25/01/2026 12:30"
+      "starts_at": "25/01/2026 12:30",
+      "home_logo": "MAKOAK.png",
+      "away_logo": "AGURAIN.png"
     },
     {
       "jornada": 12,
       "monday": "2026-01-19",
+      "home_team_id": "685fb8deb4af0",
+      "away_team_id": "6888bc940b89d",
+      "source": "jornada",
       "partido_id": "",
       "home_team": "VENTACLIM SUGARRAK LAUDIO",
       "away_team": "ATZURRA SUGOIAK",
@@ -832,11 +1209,16 @@
       "away_score": 55,
       "status": "FINALIZADO",
       "venue": "LA GRANJA",
-      "starts_at": "25/01/2026 16:00"
+      "starts_at": "25/01/2026 16:00",
+      "home_logo": "SUGARRAK LAUDIO.png",
+      "away_logo": "GASTEIZKO ATZURRA.png"
     },
     {
       "jornada": 12,
       "monday": "2026-01-19",
+      "home_team_id": "687d5fa5971a5",
+      "away_team_id": "685a434d7e4f5",
+      "source": "jornada",
       "partido_id": "68c807c340b00",
       "home_team": "KANGRETX LEGENDS",
       "away_team": "I4A",
@@ -844,11 +1226,16 @@
       "away_score": 50,
       "status": "FINALIZADO",
       "venue": "POL. IBAIONDO",
-      "starts_at": "25/01/2026 19:30"
+      "starts_at": "25/01/2026 19:30",
+      "home_logo": "KANGRETX ARABA.png",
+      "away_logo": "MAKEIJAN.png"
     },
     {
       "jornada": 13,
       "monday": "2026-02-02",
+      "home_team_id": "68592b4b077f6",
+      "away_team_id": "687574006480e",
+      "source": "jornada",
       "partido_id": "68c807c3434f5",
       "home_team": "POZO I. MOICAR",
       "away_team": "CD EUREKA",
@@ -856,11 +1243,16 @@
       "away_score": 50,
       "status": "FINALIZADO",
       "venue": "POL. IBAIONDO",
-      "starts_at": "08/02/2026 09:00"
+      "starts_at": "08/02/2026 09:00",
+      "home_logo": "POZO I. MOICAR.png",
+      "away_logo": "EUREKA.png"
     },
     {
       "jornada": 13,
       "monday": "2026-02-02",
+      "home_team_id": "6870fef918360",
+      "away_team_id": "687d5fa5971a5",
+      "source": "jornada",
       "partido_id": "68c807c3434e8",
       "home_team": "BAR MANAOS LAKUA",
       "away_team": "KANGRETX LEGENDS",
@@ -868,11 +1260,16 @@
       "away_score": 67,
       "status": "FINALIZADO",
       "venue": "POL. IBAIONDO",
-      "starts_at": "08/02/2026 10:45"
+      "starts_at": "08/02/2026 10:45",
+      "home_logo": "AUKAL BASKET C.D..png",
+      "away_logo": "KANGRETX ARABA.png"
     },
     {
       "jornada": 13,
       "monday": "2026-02-02",
+      "home_team_id": "686cca04d8058",
+      "away_team_id": "687fb92515d72",
+      "source": "jornada",
       "partido_id": "68c807c3434f2",
       "home_team": "AGURAIN SASKIBALOIA C",
       "away_team": "ANBOTO JATETXEA",
@@ -880,11 +1277,16 @@
       "away_score": 82,
       "status": "FINALIZADO",
       "venue": "LEZAO POLIDEPORTIVO",
-      "starts_at": "08/02/2026 12:15"
+      "starts_at": "08/02/2026 12:15",
+      "home_logo": "AGURAIN.png",
+      "away_logo": "AKBA2 C.D.B..png"
     },
     {
       "jornada": 13,
       "monday": "2026-02-02",
+      "home_team_id": "6888bc940b89d",
+      "away_team_id": "68712eb48615f",
+      "source": "jornada",
       "partido_id": "68c807c3434f0",
       "home_team": "ATZURRA SUGOIAK",
       "away_team": "C.B.MAKOAK",
@@ -892,11 +1294,16 @@
       "away_score": 62,
       "status": "FINALIZADO",
       "venue": "POL. IBAIONDO",
-      "starts_at": "08/02/2026 12:30"
+      "starts_at": "08/02/2026 12:30",
+      "home_logo": "GASTEIZKO ATZURRA.png",
+      "away_logo": "MAKOAK.png"
     },
     {
       "jornada": 13,
       "monday": "2026-02-02",
+      "home_team_id": "6853f3406e213",
+      "away_team_id": "6878eea4ae15a",
+      "source": "jornada",
       "partido_id": "68c807c3434f3",
       "home_team": "GAZALBIDE A",
       "away_team": "VIAJES OLARIZU",
@@ -904,11 +1311,16 @@
       "away_score": 68,
       "status": "FINALIZADO",
       "venue": "SAN VIATOR",
-      "starts_at": "08/02/2026 12:30"
+      "starts_at": "08/02/2026 12:30",
+      "home_logo": "FRANJA DE GAZALBIDE C.B..png",
+      "away_logo": "VIAJES OLARIZU.png"
     },
     {
       "jornada": 13,
       "monday": "2026-02-02",
+      "home_team_id": "685a434d7e4f5",
+      "away_team_id": "685fb8deb4af0",
+      "source": "jornada",
       "partido_id": "68c807c3434ee",
       "home_team": "I4A",
       "away_team": "VENTACLIM SUGARRAK LAUDIO",
@@ -916,11 +1328,33 @@
       "away_score": 73,
       "status": "FINALIZADO",
       "venue": "POL. IBAIONDO",
-      "starts_at": "08/02/2026 17:45"
+      "starts_at": "08/02/2026 17:45",
+      "home_logo": "MAKEIJAN.png",
+      "away_logo": "SUGARRAK LAUDIO.png"
     },
     {
       "jornada": 14,
       "monday": "2026-02-16",
+      "home_team_id": "6878eea4ae15a",
+      "away_team_id": "686cca04d8058",
+      "source": "calendar",
+      "partido_id": "",
+      "home_team": "VIAJES OLARIZU",
+      "away_team": "AGURAIN SASKIBALOIA C",
+      "home_score": 69,
+      "away_score": 43,
+      "status": "FINALIZADO",
+      "venue": null,
+      "starts_at": null,
+      "home_logo": "VIAJES OLARIZU.png",
+      "away_logo": "AGURAIN.png"
+    },
+    {
+      "jornada": 14,
+      "monday": "2026-02-16",
+      "home_team_id": "687fb92515d72",
+      "away_team_id": "6888bc940b89d",
+      "source": "jornada",
       "partido_id": "68c807c345d99",
       "home_team": "ANBOTO JATETXEA",
       "away_team": "ATZURRA SUGOIAK",
@@ -928,11 +1362,16 @@
       "away_score": 47,
       "status": "FINALIZADO",
       "venue": "LANDAZURI",
-      "starts_at": "22/02/2026 09:00"
+      "starts_at": "22/02/2026 09:00",
+      "home_logo": "AKBA2 C.D.B..png",
+      "away_logo": "GASTEIZKO ATZURRA.png"
     },
     {
       "jornada": 14,
       "monday": "2026-02-16",
+      "home_team_id": "685fb8deb4af0",
+      "away_team_id": "687d5fa5971a5",
+      "source": "jornada",
       "partido_id": "68c807c345d9b",
       "home_team": "VENTACLIM SUGARRAK LAUDIO",
       "away_team": "KANGRETX LEGENDS",
@@ -940,11 +1379,16 @@
       "away_score": 71,
       "status": "FINALIZADO",
       "venue": "LA GRANJA",
-      "starts_at": "22/02/2026 16:00"
+      "starts_at": "22/02/2026 16:00",
+      "home_logo": "SUGARRAK LAUDIO.png",
+      "away_logo": "KANGRETX ARABA.png"
     },
     {
       "jornada": 14,
       "monday": "2026-02-16",
+      "home_team_id": "687574006480e",
+      "away_team_id": "6853f3406e213",
+      "source": "jornada",
       "partido_id": "68c807c345d97",
       "home_team": "CD EUREKA",
       "away_team": "GAZALBIDE A",
@@ -952,11 +1396,16 @@
       "away_score": 33,
       "status": "FINALIZADO",
       "venue": "POL. IBAIONDO",
-      "starts_at": "22/02/2026 17:45"
+      "starts_at": "22/02/2026 17:45",
+      "home_logo": "EUREKA.png",
+      "away_logo": "FRANJA DE GAZALBIDE C.B..png"
     },
     {
       "jornada": 14,
       "monday": "2026-02-16",
+      "home_team_id": "68712eb48615f",
+      "away_team_id": "685a434d7e4f5",
+      "source": "jornada",
       "partido_id": "68c807c345d9a",
       "home_team": "C.B.MAKOAK",
       "away_team": "I4A",
@@ -964,47 +1413,16 @@
       "away_score": 71,
       "status": "FINALIZADO",
       "venue": "POL. IBAIONDO",
-      "starts_at": "22/02/2026 17:45"
+      "starts_at": "22/02/2026 17:45",
+      "home_logo": "MAKOAK.png",
+      "away_logo": "MAKEIJAN.png"
     },
     {
       "jornada": 15,
       "monday": "2026-02-23",
-      "partido_id": "68c807c348346",
-      "home_team": "AGURAIN SASKIBALOIA C",
-      "away_team": "CD EUREKA",
-      "home_score": 65,
-      "away_score": 47,
-      "status": "FINALIZADO",
-      "venue": "ARRAZPI BERRI",
-      "starts_at": "28/02/2026 16:30"
-    },
-    {
-      "jornada": 15,
-      "monday": "2026-02-23",
-      "partido_id": "68c807c348347",
-      "home_team": "GAZALBIDE A",
-      "away_team": "POZO I. MOICAR",
-      "home_score": 60,
-      "away_score": 40,
-      "status": "FINALIZADO",
-      "venue": "SAN VIATOR",
-      "starts_at": "28/02/2026 17:00"
-    },
-    {
-      "jornada": 15,
-      "monday": "2026-02-23",
-      "partido_id": "68c807c34833c",
-      "home_team": "BAR MANAOS LAKUA",
-      "away_team": "VENTACLIM SUGARRAK LAUDIO",
-      "home_score": 41,
-      "away_score": 52,
-      "status": "FINALIZADO",
-      "venue": "LANDAZURI",
-      "starts_at": "28/02/2026 17:45"
-    },
-    {
-      "jornada": 15,
-      "monday": "2026-02-23",
+      "home_team_id": "687d5fa5971a5",
+      "away_team_id": "68712eb48615f",
+      "source": "jornada",
       "partido_id": "68c807c348341",
       "home_team": "KANGRETX LEGENDS",
       "away_team": "C.B.MAKOAK",
@@ -1012,11 +1430,16 @@
       "away_score": 55,
       "status": "FINALIZADO",
       "venue": "MENDIZORROTZA",
-      "starts_at": "01/03/2026 09:00"
+      "starts_at": "01/03/2026 09:00",
+      "home_logo": "KANGRETX ARABA.png",
+      "away_logo": "MAKOAK.png"
     },
     {
       "jornada": 15,
       "monday": "2026-02-23",
+      "home_team_id": "68592b4b077f6",
+      "away_team_id": "6870fef918360",
+      "source": "jornada",
       "partido_id": "68c807c345d93",
       "home_team": "POZO I. MOICAR",
       "away_team": "BAR MANAOS LAKUA",
@@ -1024,11 +1447,16 @@
       "away_score": 45,
       "status": "FINALIZADO",
       "venue": "POL. IBAIONDO",
-      "starts_at": "01/03/2026 10:45"
+      "starts_at": "01/03/2026 10:45",
+      "home_logo": "POZO I. MOICAR.png",
+      "away_logo": "AUKAL BASKET C.D..png"
     },
     {
       "jornada": 15,
       "monday": "2026-02-23",
+      "home_team_id": "685a434d7e4f5",
+      "away_team_id": "687fb92515d72",
+      "source": "jornada",
       "partido_id": "68c807c348343",
       "home_team": "I4A",
       "away_team": "ANBOTO JATETXEA",
@@ -1036,11 +1464,16 @@
       "away_score": 39,
       "status": "FINALIZADO",
       "venue": "POL. IBAIONDO",
-      "starts_at": "01/03/2026 16:00"
+      "starts_at": "01/03/2026 16:00",
+      "home_logo": "MAKEIJAN.png",
+      "away_logo": "AKBA2 C.D.B..png"
     },
     {
       "jornada": 15,
       "monday": "2026-02-23",
+      "home_team_id": "6888bc940b89d",
+      "away_team_id": "6878eea4ae15a",
+      "source": "jornada",
       "partido_id": "68c807c348344",
       "home_team": "ATZURRA SUGOIAK",
       "away_team": "VIAJES OLARIZU",
@@ -1048,11 +1481,67 @@
       "away_score": 70,
       "status": "FINALIZADO",
       "venue": "POL. IBAIONDO",
-      "starts_at": "01/03/2026 17:45"
+      "starts_at": "01/03/2026 17:45",
+      "home_logo": "GASTEIZKO ATZURRA.png",
+      "away_logo": "VIAJES OLARIZU.png"
+    },
+    {
+      "jornada": 15,
+      "monday": "2026-02-23",
+      "home_team_id": "686cca04d8058",
+      "away_team_id": "687574006480e",
+      "source": "jornada",
+      "partido_id": "68c807c348346",
+      "home_team": "AGURAIN SASKIBALOIA C",
+      "away_team": "CD EUREKA",
+      "home_score": 65,
+      "away_score": 47,
+      "status": "FINALIZADO",
+      "venue": "ARRAZPI BERRI",
+      "starts_at": "28/02/2026 16:30",
+      "home_logo": "AGURAIN.png",
+      "away_logo": "EUREKA.png"
+    },
+    {
+      "jornada": 15,
+      "monday": "2026-02-23",
+      "home_team_id": "6853f3406e213",
+      "away_team_id": "68592b4b077f6",
+      "source": "jornada",
+      "partido_id": "68c807c348347",
+      "home_team": "GAZALBIDE A",
+      "away_team": "POZO I. MOICAR",
+      "home_score": 60,
+      "away_score": 40,
+      "status": "FINALIZADO",
+      "venue": "SAN VIATOR",
+      "starts_at": "28/02/2026 17:00",
+      "home_logo": "FRANJA DE GAZALBIDE C.B..png",
+      "away_logo": "POZO I. MOICAR.png"
+    },
+    {
+      "jornada": 15,
+      "monday": "2026-02-23",
+      "home_team_id": "6870fef918360",
+      "away_team_id": "685fb8deb4af0",
+      "source": "jornada",
+      "partido_id": "68c807c34833c",
+      "home_team": "BAR MANAOS LAKUA",
+      "away_team": "VENTACLIM SUGARRAK LAUDIO",
+      "home_score": 41,
+      "away_score": 52,
+      "status": "FINALIZADO",
+      "venue": "LANDAZURI",
+      "starts_at": "28/02/2026 17:45",
+      "home_logo": "AUKAL BASKET C.D..png",
+      "away_logo": "SUGARRAK LAUDIO.png"
     },
     {
       "jornada": 16,
       "monday": "2026-03-02",
+      "home_team_id": "6853f3406e213",
+      "away_team_id": "6870fef918360",
+      "source": "jornada",
       "partido_id": "68c807c34a8ea",
       "home_team": "GAZALBIDE A",
       "away_team": "BAR MANAOS LAKUA",
@@ -1060,11 +1549,16 @@
       "away_score": 57,
       "status": "FINALIZADO",
       "venue": "SAN VIATOR",
-      "starts_at": "07/03/2026 18:00"
+      "starts_at": "07/03/2026 18:00",
+      "home_logo": "FRANJA DE GAZALBIDE C.B..png",
+      "away_logo": "AUKAL BASKET C.D..png"
     },
     {
       "jornada": 16,
       "monday": "2026-03-02",
+      "home_team_id": "687574006480e",
+      "away_team_id": "6888bc940b89d",
+      "source": "jornada",
       "partido_id": "68c807c34a8f6",
       "home_team": "CD EUREKA",
       "away_team": "ATZURRA SUGOIAK",
@@ -1072,11 +1566,16 @@
       "away_score": 38,
       "status": "FINALIZADO",
       "venue": "LANDAZURI",
-      "starts_at": "08/03/2026 09:00"
+      "starts_at": "08/03/2026 09:00",
+      "home_logo": "EUREKA.png",
+      "away_logo": "GASTEIZKO ATZURRA.png"
     },
     {
       "jornada": 16,
       "monday": "2026-03-02",
+      "home_team_id": "68592b4b077f6",
+      "away_team_id": "686cca04d8058",
+      "source": "jornada",
       "partido_id": "68c807c34a8ee",
       "home_team": "POZO I. MOICAR",
       "away_team": "AGURAIN SASKIBALOIA C",
@@ -1084,11 +1583,16 @@
       "away_score": 50,
       "status": "FINALIZADO",
       "venue": "POL. IBAIONDO",
-      "starts_at": "08/03/2026 10:45"
+      "starts_at": "08/03/2026 10:45",
+      "home_logo": "POZO I. MOICAR.png",
+      "away_logo": "AGURAIN.png"
     },
     {
       "jornada": 16,
       "monday": "2026-03-02",
+      "home_team_id": "68712eb48615f",
+      "away_team_id": "685fb8deb4af0",
+      "source": "jornada",
       "partido_id": "68c807c34a8fb",
       "home_team": "C.B.MAKOAK",
       "away_team": "VENTACLIM SUGARRAK LAUDIO",
@@ -1096,11 +1600,16 @@
       "away_score": 49,
       "status": "FINALIZADO",
       "venue": "POL. IBAIONDO",
-      "starts_at": "08/03/2026 10:45"
+      "starts_at": "08/03/2026 10:45",
+      "home_logo": "MAKOAK.png",
+      "away_logo": "SUGARRAK LAUDIO.png"
     },
     {
       "jornada": 16,
       "monday": "2026-03-02",
+      "home_team_id": "687fb92515d72",
+      "away_team_id": "687d5fa5971a5",
+      "source": "jornada",
       "partido_id": "68c807c34a8fa",
       "home_team": "ANBOTO JATETXEA",
       "away_team": "KANGRETX LEGENDS",
@@ -1108,11 +1617,16 @@
       "away_score": 66,
       "status": "FINALIZADO",
       "venue": "POL. IBAIONDO",
-      "starts_at": "08/03/2026 12:30"
+      "starts_at": "08/03/2026 12:30",
+      "home_logo": "AKBA2 C.D.B..png",
+      "away_logo": "KANGRETX ARABA.png"
     },
     {
       "jornada": 16,
       "monday": "2026-03-02",
+      "home_team_id": "6878eea4ae15a",
+      "away_team_id": "685a434d7e4f5",
+      "source": "jornada",
       "partido_id": "68c807c34a8f8",
       "home_team": "VIAJES OLARIZU",
       "away_team": "I4A",
@@ -1120,11 +1634,33 @@
       "away_score": 73,
       "status": "FINALIZADO",
       "venue": "POL. IBAIONDO",
-      "starts_at": "08/03/2026 19:30"
+      "starts_at": "08/03/2026 19:30",
+      "home_logo": "VIAJES OLARIZU.png",
+      "away_logo": "MAKEIJAN.png"
     },
     {
       "jornada": 17,
       "monday": "2026-03-16",
+      "home_team_id": "685fb8deb4af0",
+      "away_team_id": "687fb92515d72",
+      "source": "calendar",
+      "partido_id": "",
+      "home_team": "VENTACLIM SUGARRAK LAUDIO",
+      "away_team": "ANBOTO JATETXEA",
+      "home_score": 61,
+      "away_score": 36,
+      "status": "FINALIZADO",
+      "venue": null,
+      "starts_at": null,
+      "home_logo": "SUGARRAK LAUDIO.png",
+      "away_logo": "AKBA2 C.D.B..png"
+    },
+    {
+      "jornada": 17,
+      "monday": "2026-03-16",
+      "home_team_id": "6888bc940b89d",
+      "away_team_id": "68592b4b077f6",
+      "source": "jornada",
       "partido_id": "68c807c34ce1b",
       "home_team": "ATZURRA SUGOIAK",
       "away_team": "POZO I. MOICAR",
@@ -1132,11 +1668,16 @@
       "away_score": 47,
       "status": "FINALIZADO",
       "venue": "LANDAZURI",
-      "starts_at": "21/03/2026 17:45"
+      "starts_at": "21/03/2026 17:45",
+      "home_logo": "GASTEIZKO ATZURRA.png",
+      "away_logo": "POZO I. MOICAR.png"
     },
     {
       "jornada": 17,
       "monday": "2026-03-16",
+      "home_team_id": "686cca04d8058",
+      "away_team_id": "6853f3406e213",
+      "source": "jornada",
       "partido_id": "68c807c34ce1c",
       "home_team": "AGURAIN SASKIBALOIA C",
       "away_team": "GAZALBIDE A",
@@ -1144,11 +1685,16 @@
       "away_score": 59,
       "status": "FINALIZADO",
       "venue": "LEZAO POLIDEPORTIVO",
-      "starts_at": "21/03/2026 18:00"
+      "starts_at": "21/03/2026 18:00",
+      "home_logo": "AGURAIN.png",
+      "away_logo": "FRANJA DE GAZALBIDE C.B..png"
     },
     {
       "jornada": 17,
       "monday": "2026-03-16",
+      "home_team_id": "6870fef918360",
+      "away_team_id": "68712eb48615f",
+      "source": "jornada",
       "partido_id": "68c807c34ce12",
       "home_team": "BAR MANAOS LAKUA",
       "away_team": "C.B.MAKOAK",
@@ -1156,11 +1702,16 @@
       "away_score": 54,
       "status": "FINALIZADO",
       "venue": "LANDAZURI",
-      "starts_at": "21/03/2026 19:30"
+      "starts_at": "21/03/2026 19:30",
+      "home_logo": "AUKAL BASKET C.D..png",
+      "away_logo": "MAKOAK.png"
     },
     {
       "jornada": 17,
       "monday": "2026-03-16",
+      "home_team_id": "687d5fa5971a5",
+      "away_team_id": "6878eea4ae15a",
+      "source": "jornada",
       "partido_id": "68c807c34ce19",
       "home_team": "KANGRETX LEGENDS",
       "away_team": "VIAJES OLARIZU",
@@ -1168,11 +1719,16 @@
       "away_score": 48,
       "status": "FINALIZADO",
       "venue": "POL. IBAIONDO",
-      "starts_at": "22/03/2026 16:00"
+      "starts_at": "22/03/2026 16:00",
+      "home_logo": "KANGRETX ARABA.png",
+      "away_logo": "VIAJES OLARIZU.png"
     },
     {
       "jornada": 17,
       "monday": "2026-03-16",
+      "home_team_id": "685a434d7e4f5",
+      "away_team_id": "687574006480e",
+      "source": "jornada",
       "partido_id": "68c807c34ce1a",
       "home_team": "I4A",
       "away_team": "CD EUREKA",
@@ -1180,11 +1736,16 @@
       "away_score": 46,
       "status": "FINALIZADO",
       "venue": "L.0.3.",
-      "starts_at": "22/03/2026 17:45"
+      "starts_at": "22/03/2026 17:45",
+      "home_logo": "MAKEIJAN.png",
+      "away_logo": "EUREKA.png"
     },
     {
       "jornada": 18,
       "monday": "2026-03-23",
+      "home_team_id": "6878eea4ae15a",
+      "away_team_id": "685fb8deb4af0",
+      "source": "jornada",
       "partido_id": "68c807c34f2c8",
       "home_team": "VIAJES OLARIZU",
       "away_team": "VENTACLIM SUGARRAK LAUDIO",
@@ -1192,11 +1753,16 @@
       "away_score": 39,
       "status": "FINALIZADO",
       "venue": "LANDAZURI",
-      "starts_at": "28/03/2026 19:30"
+      "starts_at": "28/03/2026 19:30",
+      "home_logo": "VIAJES OLARIZU.png",
+      "away_logo": "SUGARRAK LAUDIO.png"
     },
     {
       "jornada": 18,
       "monday": "2026-03-23",
+      "home_team_id": "687fb92515d72",
+      "away_team_id": "68712eb48615f",
+      "source": "jornada",
       "partido_id": "",
       "home_team": "ANBOTO JATETXEA",
       "away_team": "C.B.MAKOAK",
@@ -1204,11 +1770,16 @@
       "away_score": 3,
       "status": "FINALIZADO",
       "venue": "-",
-      "starts_at": "29/03/2026"
+      "starts_at": "29/03/2026",
+      "home_logo": "AKBA2 C.D.B..png",
+      "away_logo": "MAKOAK.png"
     },
     {
       "jornada": 18,
       "monday": "2026-03-23",
+      "home_team_id": "68592b4b077f6",
+      "away_team_id": "685a434d7e4f5",
+      "source": "jornada",
       "partido_id": "68c807c34f2c6",
       "home_team": "POZO I. MOICAR",
       "away_team": "I4A",
@@ -1216,11 +1787,16 @@
       "away_score": 62,
       "status": "FINALIZADO",
       "venue": "LANDAZURI",
-      "starts_at": "29/03/2026 09:00"
+      "starts_at": "29/03/2026 09:00",
+      "home_logo": "POZO I. MOICAR.png",
+      "away_logo": "MAKEIJAN.png"
     },
     {
       "jornada": 18,
       "monday": "2026-03-23",
+      "home_team_id": "686cca04d8058",
+      "away_team_id": "6870fef918360",
+      "source": "jornada",
       "partido_id": "68c807c34f2c1",
       "home_team": "AGURAIN SASKIBALOIA C",
       "away_team": "BAR MANAOS LAKUA",
@@ -1228,11 +1804,16 @@
       "away_score": 50,
       "status": "FINALIZADO",
       "venue": "LEZAO POLIDEPORTIVO",
-      "starts_at": "29/03/2026 12:00"
+      "starts_at": "29/03/2026 12:00",
+      "home_logo": "AGURAIN.png",
+      "away_logo": "AUKAL BASKET C.D..png"
     },
     {
       "jornada": 18,
       "monday": "2026-03-23",
+      "home_team_id": "6853f3406e213",
+      "away_team_id": "6888bc940b89d",
+      "source": "jornada",
       "partido_id": "68c807c34f2c4",
       "home_team": "GAZALBIDE A",
       "away_team": "ATZURRA SUGOIAK",
@@ -1240,11 +1821,16 @@
       "away_score": 66,
       "status": "FINALIZADO",
       "venue": "SAN VIATOR",
-      "starts_at": "29/03/2026 12:00"
+      "starts_at": "29/03/2026 12:00",
+      "home_logo": "FRANJA DE GAZALBIDE C.B..png",
+      "away_logo": "GASTEIZKO ATZURRA.png"
     },
     {
       "jornada": 18,
       "monday": "2026-03-23",
+      "home_team_id": "687574006480e",
+      "away_team_id": "687d5fa5971a5",
+      "source": "jornada",
       "partido_id": "68c807c34f2c7",
       "home_team": "CD EUREKA",
       "away_team": "KANGRETX LEGENDS",
@@ -1252,11 +1838,16 @@
       "away_score": 69,
       "status": "FINALIZADO",
       "venue": "ARANALDE",
-      "starts_at": "29/03/2026 16:00"
+      "starts_at": "29/03/2026 16:00",
+      "home_logo": "EUREKA.png",
+      "away_logo": "KANGRETX ARABA.png"
     },
     {
       "jornada": 19,
       "monday": "2026-04-06",
+      "home_team_id": "685fb8deb4af0",
+      "away_team_id": "687574006480e",
+      "source": "jornada",
       "partido_id": "68c807c35190c",
       "home_team": "VENTACLIM SUGARRAK LAUDIO",
       "away_team": "CD EUREKA",
@@ -1264,11 +1855,16 @@
       "away_score": 32,
       "status": "FINALIZADO",
       "venue": "LA GRANJA",
-      "starts_at": "12/04/2026 10:00"
+      "starts_at": "12/04/2026 10:00",
+      "home_logo": "SUGARRAK LAUDIO.png",
+      "away_logo": "EUREKA.png"
     },
     {
       "jornada": 19,
       "monday": "2026-04-06",
+      "home_team_id": "6870fef918360",
+      "away_team_id": "687fb92515d72",
+      "source": "jornada",
       "partido_id": "68c807c351907",
       "home_team": "BAR MANAOS LAKUA",
       "away_team": "ANBOTO JATETXEA",
@@ -1276,11 +1872,16 @@
       "away_score": 57,
       "status": "FINALIZADO",
       "venue": "POL. IBAIONDO",
-      "starts_at": "12/04/2026 10:45"
+      "starts_at": "12/04/2026 10:45",
+      "home_logo": "AUKAL BASKET C.D..png",
+      "away_logo": "AKBA2 C.D.B..png"
     },
     {
       "jornada": 19,
       "monday": "2026-04-06",
+      "home_team_id": "6888bc940b89d",
+      "away_team_id": "686cca04d8058",
+      "source": "jornada",
       "partido_id": "68c807c35190f",
       "home_team": "ATZURRA SUGOIAK",
       "away_team": "AGURAIN SASKIBALOIA C",
@@ -1288,11 +1889,16 @@
       "away_score": 58,
       "status": "FINALIZADO",
       "venue": "LANDAZURI",
-      "starts_at": "12/04/2026 11:45"
+      "starts_at": "12/04/2026 11:45",
+      "home_logo": "GASTEIZKO ATZURRA.png",
+      "away_logo": "AGURAIN.png"
     },
     {
       "jornada": 19,
       "monday": "2026-04-06",
+      "home_team_id": "68712eb48615f",
+      "away_team_id": "6878eea4ae15a",
+      "source": "jornada",
       "partido_id": "68c807c35190b",
       "home_team": "C.B.MAKOAK",
       "away_team": "VIAJES OLARIZU",
@@ -1300,11 +1906,16 @@
       "away_score": 35,
       "status": "FINALIZADO",
       "venue": "POL. IBAIONDO",
-      "starts_at": "12/04/2026 12:30"
+      "starts_at": "12/04/2026 12:30",
+      "home_logo": "MAKOAK.png",
+      "away_logo": "VIAJES OLARIZU.png"
     },
     {
       "jornada": 19,
       "monday": "2026-04-06",
+      "home_team_id": "687d5fa5971a5",
+      "away_team_id": "68592b4b077f6",
+      "source": "jornada",
       "partido_id": "68c807c35190d",
       "home_team": "KANGRETX LEGENDS",
       "away_team": "POZO I. MOICAR",
@@ -1312,11 +1923,16 @@
       "away_score": 39,
       "status": "FINALIZADO",
       "venue": "POL. IBAIONDO",
-      "starts_at": "12/04/2026 16:00"
+      "starts_at": "12/04/2026 16:00",
+      "home_logo": "KANGRETX ARABA.png",
+      "away_logo": "POZO I. MOICAR.png"
     },
     {
       "jornada": 19,
       "monday": "2026-04-06",
+      "home_team_id": "685a434d7e4f5",
+      "away_team_id": "6853f3406e213",
+      "source": "jornada",
       "partido_id": "68c807c35190e",
       "home_team": "I4A",
       "away_team": "GAZALBIDE A",
@@ -1324,11 +1940,16 @@
       "away_score": 54,
       "status": "FINALIZADO",
       "venue": "POL. IBAIONDO",
-      "starts_at": "12/04/2026 17:45"
+      "starts_at": "12/04/2026 17:45",
+      "home_logo": "MAKEIJAN.png",
+      "away_logo": "FRANJA DE GAZALBIDE C.B..png"
     },
     {
       "jornada": 20,
       "monday": "2026-04-13",
+      "home_team_id": "6853f3406e213",
+      "away_team_id": "687d5fa5971a5",
+      "source": "jornada",
       "partido_id": "68c807c354054",
       "home_team": "GAZALBIDE A",
       "away_team": "KANGRETX LEGENDS",
@@ -1336,11 +1957,16 @@
       "away_score": 42,
       "status": "FINALIZADO",
       "venue": "SAN VIATOR",
-      "starts_at": "18/04/2026 19:30"
+      "starts_at": "18/04/2026 19:30",
+      "home_logo": "FRANJA DE GAZALBIDE C.B..png",
+      "away_logo": "KANGRETX ARABA.png"
     },
     {
       "jornada": 20,
       "monday": "2026-04-13",
+      "home_team_id": "6878eea4ae15a",
+      "away_team_id": "687fb92515d72",
+      "source": "jornada",
       "partido_id": "68c807c354057",
       "home_team": "VIAJES OLARIZU",
       "away_team": "ANBOTO JATETXEA",
@@ -1348,11 +1974,16 @@
       "away_score": 54,
       "status": "FINALIZADO",
       "venue": "POL. IBAIONDO",
-      "starts_at": "19/04/2026 09:00"
+      "starts_at": "19/04/2026 09:00",
+      "home_logo": "VIAJES OLARIZU.png",
+      "away_logo": "AKBA2 C.D.B..png"
     },
     {
       "jornada": 20,
       "monday": "2026-04-13",
+      "home_team_id": "68592b4b077f6",
+      "away_team_id": "685fb8deb4af0",
+      "source": "jornada",
       "partido_id": "68c807c354055",
       "home_team": "POZO I. MOICAR",
       "away_team": "VENTACLIM SUGARRAK LAUDIO",
@@ -1360,11 +1991,16 @@
       "away_score": 88,
       "status": "FINALIZADO",
       "venue": "LANDAZURI",
-      "starts_at": "19/04/2026 10:45"
+      "starts_at": "19/04/2026 10:45",
+      "home_logo": "POZO I. MOICAR.png",
+      "away_logo": "SUGARRAK LAUDIO.png"
     },
     {
       "jornada": 20,
       "monday": "2026-04-13",
+      "home_team_id": "686cca04d8058",
+      "away_team_id": "685a434d7e4f5",
+      "source": "jornada",
       "partido_id": "68c807c354053",
       "home_team": "AGURAIN SASKIBALOIA C",
       "away_team": "I4A",
@@ -1372,11 +2008,16 @@
       "away_score": 60,
       "status": "FINALIZADO",
       "venue": "LEZAO POLIDEPORTIVO",
-      "starts_at": "19/04/2026 11:00"
+      "starts_at": "19/04/2026 11:00",
+      "home_logo": "AGURAIN.png",
+      "away_logo": "MAKEIJAN.png"
     },
     {
       "jornada": 20,
       "monday": "2026-04-13",
+      "home_team_id": "687574006480e",
+      "away_team_id": "68712eb48615f",
+      "source": "jornada",
       "partido_id": "68c807c354056",
       "home_team": "CD EUREKA",
       "away_team": "C.B.MAKOAK",
@@ -1384,11 +2025,16 @@
       "away_score": 64,
       "status": "FINALIZADO",
       "venue": "L.0.3.",
-      "starts_at": "19/04/2026 12:30"
+      "starts_at": "19/04/2026 12:30",
+      "home_logo": "EUREKA.png",
+      "away_logo": "MAKOAK.png"
     },
     {
       "jornada": 20,
       "monday": "2026-04-13",
+      "home_team_id": "6888bc940b89d",
+      "away_team_id": "6870fef918360",
+      "source": "jornada",
       "partido_id": "68c807c354051",
       "home_team": "ATZURRA SUGOIAK",
       "away_team": "BAR MANAOS LAKUA",
@@ -1396,11 +2042,16 @@
       "away_score": 47,
       "status": "FINALIZADO",
       "venue": "POL. IBAIONDO",
-      "starts_at": "19/04/2026 16:00"
+      "starts_at": "19/04/2026 16:00",
+      "home_logo": "GASTEIZKO ATZURRA.png",
+      "away_logo": "AUKAL BASKET C.D..png"
     },
     {
       "jornada": 21,
       "monday": "2026-05-04",
+      "home_team_id": "685fb8deb4af0",
+      "away_team_id": "6853f3406e213",
+      "source": "jornada",
       "partido_id": "68c807c3569e0",
       "home_team": "VENTACLIM SUGARRAK LAUDIO",
       "away_team": "GAZALBIDE A",
@@ -1408,11 +2059,16 @@
       "away_score": 57,
       "status": "FINALIZADO",
       "venue": "LA GRANJA",
-      "starts_at": "09/05/2026 18:00"
+      "starts_at": "09/05/2026 18:00",
+      "home_logo": "SUGARRAK LAUDIO.png",
+      "away_logo": "FRANJA DE GAZALBIDE C.B..png"
     },
     {
       "jornada": 21,
       "monday": "2026-05-04",
+      "home_team_id": "6878eea4ae15a",
+      "away_team_id": "6870fef918360",
+      "source": "jornada",
       "partido_id": "68c807c3569dc",
       "home_team": "VIAJES OLARIZU",
       "away_team": "BAR MANAOS LAKUA",
@@ -1420,11 +2076,16 @@
       "away_score": 38,
       "status": "FINALIZADO",
       "venue": "POL. IBAIONDO",
-      "starts_at": "09/05/2026 19:30"
+      "starts_at": "09/05/2026 19:30",
+      "home_logo": "VIAJES OLARIZU.png",
+      "away_logo": "AUKAL BASKET C.D..png"
     },
     {
       "jornada": 21,
       "monday": "2026-05-04",
+      "home_team_id": "68712eb48615f",
+      "away_team_id": "68592b4b077f6",
+      "source": "jornada",
       "partido_id": "68c807c3569df",
       "home_team": "C.B.MAKOAK",
       "away_team": "POZO I. MOICAR",
@@ -1432,11 +2093,16 @@
       "away_score": 63,
       "status": "FINALIZADO",
       "venue": "LANDAZURI",
-      "starts_at": "10/05/2026 09:00"
+      "starts_at": "10/05/2026 09:00",
+      "home_logo": "MAKOAK.png",
+      "away_logo": "POZO I. MOICAR.png"
     },
     {
       "jornada": 21,
       "monday": "2026-05-04",
+      "home_team_id": "685a434d7e4f5",
+      "away_team_id": "6888bc940b89d",
+      "source": "jornada",
       "partido_id": "68c807c3569e2",
       "home_team": "I4A",
       "away_team": "ATZURRA SUGOIAK",
@@ -1444,11 +2110,16 @@
       "away_score": 61,
       "status": "FINALIZADO",
       "venue": "POL. IBAIONDO",
-      "starts_at": "10/05/2026 09:00"
+      "starts_at": "10/05/2026 09:00",
+      "home_logo": "MAKEIJAN.png",
+      "away_logo": "GASTEIZKO ATZURRA.png"
     },
     {
       "jornada": 21,
       "monday": "2026-05-04",
+      "home_team_id": "687fb92515d72",
+      "away_team_id": "687574006480e",
+      "source": "jornada",
       "partido_id": "68c807c3569de",
       "home_team": "ANBOTO JATETXEA",
       "away_team": "CD EUREKA",
@@ -1456,11 +2127,16 @@
       "away_score": 41,
       "status": "FINALIZADO",
       "venue": "L.0.3.",
-      "starts_at": "10/05/2026 17:45"
+      "starts_at": "10/05/2026 17:45",
+      "home_logo": "AKBA2 C.D.B..png",
+      "away_logo": "EUREKA.png"
     },
     {
       "jornada": 21,
       "monday": "2026-05-04",
+      "home_team_id": "687d5fa5971a5",
+      "away_team_id": "686cca04d8058",
+      "source": "jornada",
       "partido_id": "68c807c3569e1",
       "home_team": "KANGRETX LEGENDS",
       "away_team": "AGURAIN SASKIBALOIA C",
@@ -1468,11 +2144,16 @@
       "away_score": 54,
       "status": "FINALIZADO",
       "venue": "POL. IBAIONDO",
-      "starts_at": "10/05/2026 19:30"
+      "starts_at": "10/05/2026 19:30",
+      "home_logo": "KANGRETX ARABA.png",
+      "away_logo": "AGURAIN.png"
     },
     {
       "jornada": 22,
       "monday": "2026-05-11",
+      "home_team_id": "68592b4b077f6",
+      "away_team_id": "687fb92515d72",
+      "source": "jornada",
       "partido_id": "68c807c3592ca",
       "home_team": "POZO I. MOICAR",
       "away_team": "ANBOTO JATETXEA",
@@ -1480,11 +2161,16 @@
       "away_score": 63,
       "status": "FINALIZADO",
       "venue": "SAN ANDRES",
-      "starts_at": "16/05/2026 17:45"
+      "starts_at": "16/05/2026 17:45",
+      "home_logo": "POZO I. MOICAR.png",
+      "away_logo": "AKBA2 C.D.B..png"
     },
     {
       "jornada": 22,
       "monday": "2026-05-11",
+      "home_team_id": "6870fef918360",
+      "away_team_id": "685a434d7e4f5",
+      "source": "jornada",
       "partido_id": "68c807c3592c6",
       "home_team": "BAR MANAOS LAKUA",
       "away_team": "I4A",
@@ -1492,11 +2178,16 @@
       "away_score": 69,
       "status": "FINALIZADO",
       "venue": "LANDAZURI",
-      "starts_at": "17/05/2026 09:30"
+      "starts_at": "17/05/2026 09:30",
+      "home_logo": "AUKAL BASKET C.D..png",
+      "away_logo": "MAKEIJAN.png"
     },
     {
       "jornada": 22,
       "monday": "2026-05-11",
+      "home_team_id": "6888bc940b89d",
+      "away_team_id": "687d5fa5971a5",
+      "source": "jornada",
       "partido_id": "68c807c3592c7",
       "home_team": "ATZURRA SUGOIAK",
       "away_team": "KANGRETX LEGENDS",
@@ -1504,11 +2195,16 @@
       "away_score": 61,
       "status": "FINALIZADO",
       "venue": "POL. IBAIONDO",
-      "starts_at": "17/05/2026 10:30"
+      "starts_at": "17/05/2026 10:30",
+      "home_logo": "GASTEIZKO ATZURRA.png",
+      "away_logo": "KANGRETX ARABA.png"
     },
     {
       "jornada": 22,
       "monday": "2026-05-11",
+      "home_team_id": "6853f3406e213",
+      "away_team_id": "68712eb48615f",
+      "source": "jornada",
       "partido_id": "68c807c3592c9",
       "home_team": "GAZALBIDE A",
       "away_team": "C.B.MAKOAK",
@@ -1516,11 +2212,16 @@
       "away_score": 71,
       "status": "FINALIZADO",
       "venue": "SAN VIATOR",
-      "starts_at": "17/05/2026 17:00"
+      "starts_at": "17/05/2026 17:00",
+      "home_logo": "FRANJA DE GAZALBIDE C.B..png",
+      "away_logo": "MAKOAK.png"
     },
     {
       "jornada": 22,
       "monday": "2026-05-11",
+      "home_team_id": "686cca04d8058",
+      "away_team_id": "685fb8deb4af0",
+      "source": "jornada",
       "partido_id": "68c807c3592c8",
       "home_team": "AGURAIN SASKIBALOIA C",
       "away_team": "VENTACLIM SUGARRAK LAUDIO",
@@ -1528,11 +2229,16 @@
       "away_score": 54,
       "status": "P4",
       "venue": "LEZAO POLIDEPORTIVO",
-      "starts_at": "17/05/2026 18:00"
+      "starts_at": "17/05/2026 18:00",
+      "home_logo": "AGURAIN.png",
+      "away_logo": "SUGARRAK LAUDIO.png"
     },
     {
       "jornada": 22,
       "monday": "2026-05-11",
+      "home_team_id": "687574006480e",
+      "away_team_id": "6878eea4ae15a",
+      "source": "jornada",
       "partido_id": "",
       "home_team": "CD EUREKA",
       "away_team": "VIAJES OLARIZU",
@@ -1540,7 +2246,9 @@
       "away_score": 0,
       "status": "SIN EMPEZAR",
       "venue": "L.0.3.",
-      "starts_at": "17/05/2026 19:30"
+      "starts_at": "17/05/2026 19:30",
+      "home_logo": "EUREKA.png",
+      "away_logo": "VIAJES OLARIZU.png"
     }
   ]
 }

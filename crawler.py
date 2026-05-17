@@ -687,10 +687,9 @@ def crawl(group_name: str, out_root: Path, sleep: float, force: bool) -> None:
             return logo_to_team_id[logo]
         return ""
 
-    # Walk weekly jornadas, collect partido ids that belong to our group
-    jornada_entries: list[dict] = []  # flat index of every match
+    # Walk weekly jornadas, collecting every match seen.
+    raw_entries: list[dict] = []
     seen_ids: set[str] = set()
-    seen_match_keys: set[tuple[int, frozenset[str]]] = set()
     target_group = _norm(group.group_name)
     for jornada, monday in sorted(mondays_by_jornada.items()):
         raw_path = raw_dir / f"jornada_{monday.isoformat()}.html"
@@ -705,7 +704,7 @@ def crawl(group_name: str, out_root: Path, sleep: float, force: bool) -> None:
         for entry in in_group:
             home_team_id = _resolve(entry.home_team, entry.home_logo)
             away_team_id = _resolve(entry.away_team, entry.away_logo)
-            jornada_entries.append({
+            raw_entries.append({
                 "jornada": jornada,
                 "monday": monday.isoformat(),
                 "home_team_id": home_team_id,
@@ -715,21 +714,13 @@ def crawl(group_name: str, out_root: Path, sleep: float, force: bool) -> None:
             })
             if entry.partido_id:
                 seen_ids.add(entry.partido_id)
-            if home_team_id and away_team_id:
-                seen_match_keys.add((jornada, frozenset({home_team_id, away_team_id})))
 
-    # Fold in any calendar matches that the weekly AJAX didn't surface
-    # (walkovers / forfeit results have no acta digital and only appear here).
-    added = 0
+    # Fold in calendar entries — covers walkovers / forfeits with no acta digital
+    # that the weekly AJAX doesn't surface.
     for cm in calendar.matches:
-        key = (cm.jornada, frozenset({cm.home_team_id, cm.away_team_id}))
-        if key in seen_match_keys:
-            continue
-        if not (cm.home_team_id and cm.away_team_id):
-            continue
         monday = mondays_by_jornada.get(cm.jornada)
         status = "FINALIZADO" if (cm.home_score is not None and cm.away_score is not None) else "SIN EMPEZAR"
-        jornada_entries.append({
+        raw_entries.append({
             "jornada": cm.jornada,
             "monday": monday.isoformat() if monday else None,
             "home_team_id": cm.home_team_id,
@@ -746,12 +737,36 @@ def crawl(group_name: str, out_root: Path, sleep: float, force: bool) -> None:
             "home_logo": cm.home_logo,
             "away_logo": cm.away_logo,
         })
-        seen_match_keys.add(key)
-        added += 1
-    if added:
-        log.info("Added %d calendar-only matches (no acta digital)", added)
 
-    jornada_entries.sort(key=lambda e: (e["jornada"], e.get("monday") or "", e.get("starts_at") or ""))
+    # Dedup by ordered (home_team_id, away_team_id) — in a double round-robin
+    # each ordered pair plays exactly once. A postponed game shows up in two
+    # different jornada blocks; merge them, preferring the entry with the
+    # partido_id (i.e. the played one with the digital acta).
+    def _entry_score(e: dict) -> tuple:
+        return (
+            bool(e.get("partido_id")),                  # entries with acta win
+            e.get("source") == "jornada",               # weekly AJAX preferred over calendar
+            e.get("status") == "FINALIZADO",            # finalized over pending/suspended
+            e.get("home_score") is not None,            # has a result
+        )
+
+    bucket: dict[tuple[str, str], dict] = {}
+    skipped = 0
+    for e in raw_entries:
+        key = (e.get("home_team_id") or "", e.get("away_team_id") or "")
+        if not (key[0] and key[1]):
+            skipped += 1
+            continue
+        prev = bucket.get(key)
+        if prev is None or _entry_score(e) > _entry_score(prev):
+            bucket[key] = e
+    if skipped:
+        log.warning("Skipped %d entries with unresolved team_ids", skipped)
+    cal_added = sum(1 for e in bucket.values() if e.get("source") == "calendar")
+    log.info("Index: %d matches (%d from calendar-only, no acta)", len(bucket), cal_added)
+
+    jornada_entries = sorted(bucket.values(),
+                             key=lambda e: (e["jornada"], e.get("monday") or "", e.get("starts_at") or ""))
 
     _write_json(out_dir / "matches.json", {
         "group": _to_dict(group),

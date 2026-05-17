@@ -6,7 +6,8 @@
       "Bash(python3 -c \"import requests, bs4; print\\('deps OK', requests.__version__, bs4.__version__\\)\")",
       "Bash(python3 -c ' *)",
       "Bash(node --check /Users/jgargallo/personal/repos/basketaraba/web/src/app.js)",
-      "Bash(kill 41786)"
+      "Bash(kill 41786)",
+      "Bash(kill 5663)"
     ]
   }
 }
