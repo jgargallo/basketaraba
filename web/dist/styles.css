@@ -28,6 +28,11 @@ body { font-family: 'Inter', system-ui, sans-serif; }
 }
 .nav-link:hover { color: var(--ink-900); background-color: var(--ink-100); }
 .nav-link.active { color: var(--ink-900); background-color: var(--ink-100); }
+.mobile-nav-link {
+  padding: 0.625rem 0.75rem;
+  font-size: 0.9375rem;
+  border-radius: 0.5rem;
+}
 
 .card {
   background: #fff;

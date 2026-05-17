@@ -92,6 +92,7 @@ const routes = [
 
 async function route() {
   destroyCharts();
+  closeMobileMenu();
   setLoading();
   const hash = location.hash || '#/';
   for (const r of routes) {
@@ -126,13 +127,45 @@ async function bootstrapChrome() {
   document.getElementById('group-stats').textContent =
     `${lg.totals.teams} equipos · ${lg.totals.players} jugadores · ${lg.totals.completed}/${lg.totals.games} partidos jugados`;
 
-  const sel = document.getElementById('quick-team-select');
-  sel.innerHTML = '<option value="">Ir a equipo…</option>' +
+  // Populate both team selectors (desktop inline + mobile in dropdown).
+  const opts = '<option value="">Ir a equipo…</option>' +
     lg.teams.map(t => `<option value="${t.id}">${escapeHtml(t.name)}</option>`).join('');
-  sel.addEventListener('change', () => {
-    if (sel.value) location.hash = `#/team/${sel.value}`;
-    sel.value = '';
+  document.querySelectorAll('.quick-team-select').forEach(sel => {
+    sel.innerHTML = opts;
+    sel.addEventListener('change', () => {
+      if (sel.value) location.hash = `#/team/${sel.value}`;
+      sel.value = '';
+      closeMobileMenu();
+    });
   });
+
+  setupMobileMenu();
+}
+
+function setupMobileMenu() {
+  const btn = document.getElementById('menu-toggle');
+  const menu = document.getElementById('mobile-menu');
+  if (!btn || !menu) return;
+  btn.addEventListener('click', () => {
+    const open = menu.classList.toggle('hidden') === false;
+    btn.setAttribute('aria-expanded', String(open));
+    btn.querySelector('.menu-icon-open').classList.toggle('hidden', open);
+    btn.querySelector('.menu-icon-close').classList.toggle('hidden', !open);
+  });
+  // Close on any nav link click inside the mobile menu.
+  menu.querySelectorAll('a').forEach(a => a.addEventListener('click', closeMobileMenu));
+}
+
+function closeMobileMenu() {
+  const btn = document.getElementById('menu-toggle');
+  const menu = document.getElementById('mobile-menu');
+  if (!menu || menu.classList.contains('hidden')) return;
+  menu.classList.add('hidden');
+  if (btn) {
+    btn.setAttribute('aria-expanded', 'false');
+    btn.querySelector('.menu-icon-open').classList.remove('hidden');
+    btn.querySelector('.menu-icon-close').classList.add('hidden');
+  }
 }
 
 // ---------------- League page ----------------
