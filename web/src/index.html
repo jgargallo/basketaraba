@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>BasketAraba Stats</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] },
+          colors: {
+            brand: { 50: '#fff4ed', 100: '#ffe6d4', 500: '#ff5722', 600: '#f7440f', 700: '#cc3508' },
+            ink:  { 50: '#f7f8fa', 100: '#eef0f4', 200: '#dde1ea', 300: '#b8c0cc',
+                    500: '#5b6677', 700: '#2a3340', 900: '#0e131b' },
+          },
+          boxShadow: { card: '0 1px 2px rgba(15,23,42,.04), 0 8px 24px -8px rgba(15,23,42,.08)' },
+        }
+      }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js"></script>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body class="bg-ink-50 text-ink-900 font-sans antialiased">
+  <header class="sticky top-0 z-30 bg-white/85 backdrop-blur border-b border-ink-200">
+    <div class="max-w-7xl mx-auto px-4 py-3 flex items-center gap-4">
+      <a href="#/league" class="flex items-center gap-2 font-bold text-lg">
+        <span class="w-8 h-8 rounded-lg bg-brand-500 text-white grid place-items-center">🏀</span>
+        <span>BasketAraba <span class="text-ink-500 font-medium">Stats</span></span>
+      </a>
+      <nav class="ml-auto hidden md:flex items-center gap-1 text-sm">
+        <a href="#/league" data-nav="league" class="nav-link">Liga</a>
+        <a href="#/teams" data-nav="teams" class="nav-link">Equipos</a>
+        <a href="#/leaders" data-nav="leaders" class="nav-link">Líderes</a>
+        <a href="#/schedule" data-nav="schedule" class="nav-link">Calendario</a>
+      </nav>
+      <div class="ml-auto md:ml-0">
+        <select id="quick-team-select" class="text-sm border border-ink-200 rounded-md px-2 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-brand-500"></select>
+      </div>
+    </div>
+    <div id="group-strip" class="bg-ink-100/70 border-t border-ink-200">
+      <div class="max-w-7xl mx-auto px-4 py-1.5 text-xs text-ink-500 flex items-center gap-2">
+        <span id="group-name" class="font-medium text-ink-700"></span>
+        <span class="text-ink-300">·</span>
+        <span id="group-stats"></span>
+      </div>
+    </div>
+  </header>
+
+  <main id="view" class="max-w-7xl mx-auto px-4 py-6">
+    <div class="text-center text-ink-500 py-20">Cargando…</div>
+  </main>
+
+  <footer class="max-w-7xl mx-auto px-4 py-10 text-xs text-ink-500">
+    Datos extraídos de <a class="underline hover:text-brand-600" href="https://basketaraba.com/actadigital/jornada" target="_blank" rel="noopener">basketaraba.com</a>.
+    Web estática regenerable desde <code>database.json</code>.
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>

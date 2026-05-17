@@ -1,0 +1,46 @@
+{
+  "group": {
+    "category_name": "SENIOR MASCULINA 3A",
+    "category_id": "684037903b2cd",
+    "group_name": "SENIOR MASCULINA 3A-GRUPO A",
+    "group_id": "68c8052bc76df"
+  },
+  "teams": {
+    "686cca04d8058": "AGURAIN SASKIBALOIA C",
+    "687fb92515d72": "ANBOTO JATETXEA",
+    "6888bc940b89d": "ATZURRA SUGOIAK",
+    "6870fef918360": "BAR MANAOS LAKUA",
+    "68712eb48615f": "C.B.MAKOAK",
+    "687574006480e": "CD EUREKA",
+    "6853f3406e213": "GAZALBIDE A",
+    "685a434d7e4f5": "I4A",
+    "687d5fa5971a5": "KANGRETX LEGENDS",
+    "68592b4b077f6": "POZO I. MOICAR",
+    "685fb8deb4af0": "VENTACLIM SUGARRAK LAUDIO",
+    "6878eea4ae15a": "VIAJES OLARIZU"
+  },
+  "season_jornadas": {
+    "1": "2025-10-06",
+    "2": "2025-10-13",
+    "3": "2025-10-20",
+    "4": "2025-11-03",
+    "5": "2025-11-10",
+    "6": "2025-11-17",
+    "7": "2025-11-24",
+    "8": "2025-12-08",
+    "9": "2025-12-15",
+    "10": "2026-01-05",
+    "11": "2026-01-12",
+    "12": "2026-01-19",
+    "13": "2026-02-02",
+    "14": "2026-02-16",
+    "15": "2026-02-23",
+    "16": "2026-03-02",
+    "17": "2026-03-16",
+    "18": "2026-03-23",
+    "19": "2026-04-06",
+    "20": "2026-04-13",
+    "21": "2026-05-04",
+    "22": "2026-05-11"
+  }
+}
