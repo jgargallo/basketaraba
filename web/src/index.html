@@ -29,9 +29,9 @@
 <body class="bg-ink-50 text-ink-900 font-sans antialiased">
   <header class="sticky top-0 z-30 bg-white/85 backdrop-blur border-b border-ink-200">
     <div class="max-w-7xl mx-auto px-4 py-3 flex items-center gap-4">
-      <a href="#/league" class="flex items-center gap-2 font-bold text-lg">
-        <span class="w-8 h-8 rounded-lg bg-brand-500 text-white grid place-items-center">🏀</span>
-        <span>BasketAraba <span class="text-ink-500 font-medium">Stats</span></span>
+      <a href="#/league" class="flex items-center gap-2 font-bold text-lg min-w-0">
+        <span class="w-8 h-8 rounded-lg bg-brand-500 text-white grid place-items-center shrink-0">🏀</span>
+        <span class="truncate">BasketAraba <span class="text-ink-500 font-medium">Stats</span></span>
       </a>
       <nav class="ml-auto hidden md:flex items-center gap-1 text-sm">
         <a href="#/league" data-nav="league" class="nav-link">Liga</a>
@@ -39,8 +39,24 @@
         <a href="#/leaders" data-nav="leaders" class="nav-link">Líderes</a>
         <a href="#/schedule" data-nav="schedule" class="nav-link">Calendario</a>
       </nav>
-      <div class="ml-auto md:ml-0">
-        <select id="quick-team-select" class="text-sm border border-ink-200 rounded-md px-2 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-brand-500"></select>
+      <div class="hidden md:block">
+        <select class="quick-team-select text-sm border border-ink-200 rounded-md px-2 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-brand-500"></select>
+      </div>
+      <button id="menu-toggle" class="md:hidden ml-auto -mr-1 p-2 rounded-md text-ink-700 hover:bg-ink-100 focus:outline-none focus:ring-2 focus:ring-brand-500"
+              aria-label="Abrir menú" aria-controls="mobile-menu" aria-expanded="false">
+        <svg class="menu-icon-open w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+        <svg class="menu-icon-close w-6 h-6 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div id="mobile-menu" class="hidden md:hidden border-t border-ink-200 bg-white">
+      <nav class="px-4 py-2 flex flex-col text-sm" data-mobile-nav>
+        <a href="#/league" data-nav="league" class="nav-link mobile-nav-link">Liga</a>
+        <a href="#/teams" data-nav="teams" class="nav-link mobile-nav-link">Equipos</a>
+        <a href="#/leaders" data-nav="leaders" class="nav-link mobile-nav-link">Líderes</a>
+        <a href="#/schedule" data-nav="schedule" class="nav-link mobile-nav-link">Calendario</a>
+      </nav>
+      <div class="px-4 pb-3">
+        <select class="quick-team-select w-full text-sm border border-ink-200 rounded-md px-2 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-brand-500"></select>
       </div>
     </div>
     <div id="group-strip" class="bg-ink-100/70 border-t border-ink-200">
