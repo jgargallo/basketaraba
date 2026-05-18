@@ -24,8 +24,6 @@ them in isolation.
 pip install -r requirements.txt
 ```
 
-The repo was developed against the venv at
-`/Users/jgargallo/.pyenv/versions/3.11.9/envs/basketaraba`.
 
 ## Quick start
 
