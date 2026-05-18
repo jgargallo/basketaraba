@@ -1,0 +1,148 @@
+{
+  "partido_id": "6889c9af38c51",
+  "status": "FINALIZADO",
+  "starts_at": "14/12/2025 17:45",
+  "category": "JUNIOR 2º FEMENINA",
+  "home": {
+    "team": "MCDONALDS ARABERRI",
+    "color": "#FF8000",
+    "logo": "../images/logos/ARABERRI.png",
+    "total_pts": 59,
+    "total_t2": 0,
+    "total_t3": 0,
+    "total_tl_made": 0,
+    "total_tl_att": 0,
+    "total_fp": 0,
+    "players": []
+  },
+  "away": {
+    "team": "ARKUPE SUGARRAK LAUDIO",
+    "color": "#FF0000",
+    "logo": "../images/logos/SUGARRAK LAUDIO.png",
+    "total_pts": 41,
+    "total_t2": 0,
+    "total_t3": 0,
+    "total_tl_made": 0,
+    "total_tl_att": 0,
+    "total_fp": 0,
+    "players": []
+  },
+  "quarters": [
+    [
+      14,
+      7
+    ],
+    [
+      6,
+      11
+    ],
+    [
+      19,
+      11
+    ],
+    [
+      20,
+      12
+    ]
+  ],
+  "log": [
+    {
+      "period": "P3",
+      "clock": "00:00",
+      "side": "neutral",
+      "event": "Fin de periodo",
+      "event_kind": "period_end",
+      "ft_made": null,
+      "ft_index": null,
+      "ft_of": null,
+      "player_dorsal": null,
+      "player_name": null,
+      "score_home": 59,
+      "score_away": 41
+    },
+    {
+      "period": "P3",
+      "clock": "00:01",
+      "side": "home",
+      "event": "Tiempo Muerto",
+      "event_kind": "timeout",
+      "ft_made": null,
+      "ft_index": null,
+      "ft_of": null,
+      "player_dorsal": null,
+      "player_name": null,
+      "score_home": 59,
+      "score_away": 41
+    },
+    {
+      "period": "P3",
+      "clock": "02:02",
+      "side": "away",
+      "event": "Tiempo Muerto",
+      "event_kind": "timeout",
+      "ft_made": null,
+      "ft_index": null,
+      "ft_of": null,
+      "player_dorsal": null,
+      "player_name": null,
+      "score_home": 59,
+      "score_away": 41
+    },
+    {
+      "period": "P2",
+      "clock": "00:00",
+      "side": "neutral",
+      "event": "Fin de periodo",
+      "event_kind": "period_end",
+      "ft_made": null,
+      "ft_index": null,
+      "ft_of": null,
+      "player_dorsal": null,
+      "player_name": null,
+      "score_home": 59,
+      "score_away": 41
+    },
+    {
+      "period": "P2",
+      "clock": "03:12",
+      "side": "home",
+      "event": "Tiempo Muerto",
+      "event_kind": "timeout",
+      "ft_made": null,
+      "ft_index": null,
+      "ft_of": null,
+      "player_dorsal": null,
+      "player_name": null,
+      "score_home": 59,
+      "score_away": 41
+    },
+    {
+      "period": "P1",
+      "clock": "00:00",
+      "side": "neutral",
+      "event": "Fin de periodo",
+      "event_kind": "period_end",
+      "ft_made": null,
+      "ft_index": null,
+      "ft_of": null,
+      "player_dorsal": null,
+      "player_name": null,
+      "score_home": 59,
+      "score_away": 41
+    },
+    {
+      "period": "P1",
+      "clock": "07:58",
+      "side": "away",
+      "event": "Tiempo Muerto",
+      "event_kind": "timeout",
+      "ft_made": null,
+      "ft_index": null,
+      "ft_of": null,
+      "player_dorsal": null,
+      "player_name": null,
+      "score_home": 59,
+      "score_away": 41
+    }
+  ]
+}

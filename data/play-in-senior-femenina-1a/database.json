@@ -1,0 +1,257 @@
+{
+  "group": {
+    "category_name": "PLAY IN SENIOR FEMENINA 1A",
+    "category_id": "684037bf5117a",
+    "group_name": "PLAY IN SENIOR FEMENINA 1A",
+    "group_id": "6a0af3fb8eab1"
+  },
+  "teams": [
+    {
+      "id": "6a0af5d2d8984",
+      "name": "1º GRUPO Y",
+      "logo_filename": "caab.png"
+    },
+    {
+      "id": "6a0af5c017f52",
+      "name": "2º GRUPO X",
+      "logo_filename": "caab.png"
+    },
+    {
+      "id": "686418f79fe46",
+      "name": "AXA AMURRIO",
+      "logo_filename": "ZARAOBE.jpg"
+    },
+    {
+      "id": "685a85f6d40c1",
+      "name": "C.D.B. SIBERIA GASTEIZ D",
+      "logo_filename": "SIBERIA GASTEIZ.png"
+    },
+    {
+      "id": "685a5fdb6c96d",
+      "name": "LA TERRACITA ARABA",
+      "logo_filename": "CLUB DE BALONCESTO ARABA.jpg"
+    },
+    {
+      "id": "68626a5133cc4",
+      "name": "URGATZI",
+      "logo_filename": "URGATZI K K.png"
+    }
+  ],
+  "players": [],
+  "games": [
+    {
+      "id": null,
+      "jornada": 1,
+      "date": "2026-05-23T16:30:00",
+      "venue": "BAÑUETA",
+      "status": "SIN EMPEZAR",
+      "home_team_id": "686418f79fe46",
+      "away_team_id": "68626a5133cc4",
+      "home_score": 0,
+      "away_score": 0,
+      "winner": null,
+      "quarters": [],
+      "has_box_score": false
+    },
+    {
+      "id": null,
+      "jornada": 1,
+      "date": "2026-05-23T16:30:00",
+      "venue": "LANDAZURI",
+      "status": "SIN EMPEZAR",
+      "home_team_id": "685a85f6d40c1",
+      "away_team_id": "685a5fdb6c96d",
+      "home_score": 0,
+      "away_score": 0,
+      "winner": null,
+      "quarters": [],
+      "has_box_score": false
+    },
+    {
+      "id": null,
+      "jornada": 1,
+      "date": "2026-05-24T12:00:00",
+      "venue": "LANDAZURI",
+      "status": "SIN EMPEZAR",
+      "home_team_id": "6a0af5c017f52",
+      "away_team_id": "6a0af5d2d8984",
+      "home_score": 0,
+      "away_score": 0,
+      "winner": null,
+      "quarters": [],
+      "has_box_score": false
+    },
+    {
+      "id": null,
+      "jornada": 2,
+      "date": "2025-11-22T00:00:00",
+      "venue": "",
+      "status": "SIN EMPEZAR",
+      "home_team_id": "68626a5133cc4",
+      "away_team_id": "685a85f6d40c1",
+      "home_score": 0,
+      "away_score": 0,
+      "winner": null,
+      "quarters": [],
+      "has_box_score": false
+    },
+    {
+      "id": null,
+      "jornada": 2,
+      "date": null,
+      "venue": "",
+      "status": "SIN EMPEZAR",
+      "home_team_id": "6a0af5d2d8984",
+      "away_team_id": "686418f79fe46",
+      "home_score": 0,
+      "away_score": 0,
+      "winner": null,
+      "quarters": [],
+      "has_box_score": false
+    },
+    {
+      "id": null,
+      "jornada": 2,
+      "date": null,
+      "venue": "",
+      "status": "SIN EMPEZAR",
+      "home_team_id": "685a5fdb6c96d",
+      "away_team_id": "6a0af5c017f52",
+      "home_score": 0,
+      "away_score": 0,
+      "winner": null,
+      "quarters": [],
+      "has_box_score": false
+    },
+    {
+      "id": null,
+      "jornada": 3,
+      "date": null,
+      "venue": "",
+      "status": "SIN EMPEZAR",
+      "home_team_id": "6a0af5c017f52",
+      "away_team_id": "686418f79fe46",
+      "home_score": 0,
+      "away_score": 0,
+      "winner": null,
+      "quarters": [],
+      "has_box_score": false
+    },
+    {
+      "id": null,
+      "jornada": 3,
+      "date": null,
+      "venue": "",
+      "status": "SIN EMPEZAR",
+      "home_team_id": "685a5fdb6c96d",
+      "away_team_id": "68626a5133cc4",
+      "home_score": 0,
+      "away_score": 0,
+      "winner": null,
+      "quarters": [],
+      "has_box_score": false
+    },
+    {
+      "id": null,
+      "jornada": 3,
+      "date": null,
+      "venue": "",
+      "status": "SIN EMPEZAR",
+      "home_team_id": "685a85f6d40c1",
+      "away_team_id": "6a0af5d2d8984",
+      "home_score": 0,
+      "away_score": 0,
+      "winner": null,
+      "quarters": [],
+      "has_box_score": false
+    },
+    {
+      "id": null,
+      "jornada": 4,
+      "date": "2025-11-09T00:00:00",
+      "venue": "",
+      "status": "SIN EMPEZAR",
+      "home_team_id": "686418f79fe46",
+      "away_team_id": "685a85f6d40c1",
+      "home_score": 0,
+      "away_score": 0,
+      "winner": null,
+      "quarters": [],
+      "has_box_score": false
+    },
+    {
+      "id": null,
+      "jornada": 4,
+      "date": null,
+      "venue": "",
+      "status": "SIN EMPEZAR",
+      "home_team_id": "6a0af5d2d8984",
+      "away_team_id": "685a5fdb6c96d",
+      "home_score": 0,
+      "away_score": 0,
+      "winner": null,
+      "quarters": [],
+      "has_box_score": false
+    },
+    {
+      "id": null,
+      "jornada": 4,
+      "date": null,
+      "venue": "",
+      "status": "SIN EMPEZAR",
+      "home_team_id": "6a0af5c017f52",
+      "away_team_id": "68626a5133cc4",
+      "home_score": 0,
+      "away_score": 0,
+      "winner": null,
+      "quarters": [],
+      "has_box_score": false
+    },
+    {
+      "id": null,
+      "jornada": 5,
+      "date": null,
+      "venue": "",
+      "status": "SIN EMPEZAR",
+      "home_team_id": "685a85f6d40c1",
+      "away_team_id": "6a0af5c017f52",
+      "home_score": 0,
+      "away_score": 0,
+      "winner": null,
+      "quarters": [],
+      "has_box_score": false
+    },
+    {
+      "id": null,
+      "jornada": 5,
+      "date": null,
+      "venue": "",
+      "status": "SIN EMPEZAR",
+      "home_team_id": "68626a5133cc4",
+      "away_team_id": "6a0af5d2d8984",
+      "home_score": 0,
+      "away_score": 0,
+      "winner": null,
+      "quarters": [],
+      "has_box_score": false
+    },
+    {
+      "id": null,
+      "jornada": 5,
+      "date": null,
+      "venue": "",
+      "status": "SIN EMPEZAR",
+      "home_team_id": "685a5fdb6c96d",
+      "away_team_id": "686418f79fe46",
+      "home_score": 0,
+      "away_score": 0,
+      "winner": null,
+      "quarters": [],
+      "has_box_score": false
+    }
+  ],
+  "player_game_stats": [],
+  "log_events": [],
+  "player_season_stats": [],
+  "team_season_stats": []
+}
