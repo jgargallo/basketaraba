@@ -23,6 +23,10 @@ import shutil
 import sys
 from collections import defaultdict
 from pathlib import Path
+import re
+import unicodedata
+from urllib.parse import quote
+from urllib.request import urlopen, Request
 
 
 BASKET_LOGOS_URL = "https://basketaraba.com/actadigital/images/logos/"
@@ -35,11 +39,43 @@ MIN_GAMES_FOR_LEADERS = 3
 # ---------------------------------------------------------------------------
 
 def _team_logo_url(team: dict) -> str | None:
+    local_url = team.get("logo_url")
+    if local_url:
+        return local_url
     fn = team.get("logo_filename")
     if not fn:
         return None
-    from urllib.parse import quote
     return BASKET_LOGOS_URL + quote(fn)
+
+
+def _slugify(value: str) -> str:
+    normalized = unicodedata.normalize("NFKD", value)
+    ascii_only = normalized.encode("ascii", "ignore").decode("ascii")
+    cleaned = re.sub(r"[^a-zA-Z0-9]+", "-", ascii_only.lower()).strip("-")
+    return re.sub(r"-+", "-", cleaned)
+
+
+def _download_logo(url: str, destination: Path) -> None:
+    request = Request(url, headers={"User-Agent": "Mozilla/5.0"})
+    with urlopen(request, timeout=30) as response:
+        destination.write_bytes(response.read())
+
+
+def _materialize_local_logos(db: dict, out_dir: Path) -> None:
+    group_name = db.get("group", {}).get("group_name") or "group"
+    logos_dir = out_dir / "assets" / "logos" / _slugify(group_name)
+    logos_dir.mkdir(parents=True, exist_ok=True)
+
+    for team in db.get("teams", []):
+        remote_url = _team_logo_url(team)
+        logo_filename = team.get("logo_filename")
+        if not remote_url or not logo_filename:
+            team["logo_url"] = None
+            continue
+
+        destination = logos_dir / logo_filename
+        _download_logo(remote_url, destination)
+        team["logo_url"] = "/".join(["assets", "logos", _slugify(group_name), quote(logo_filename)])
 
 
 def _index_by(items: list[dict], key: str) -> dict[str, dict]:
@@ -419,6 +455,8 @@ def build(db_path: Path, out_dir: Path, src_dir: Path) -> None:
     (out_dir / "data" / "teams").mkdir()
     (out_dir / "data" / "players").mkdir()
     (out_dir / "data" / "games").mkdir()
+
+    _materialize_local_logos(db, out_dir)
 
     league = build_league(db)
     (out_dir / "data" / "league.json").write_text(
