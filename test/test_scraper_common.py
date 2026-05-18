@@ -44,8 +44,12 @@ class ScraperCommonRegressionTests(unittest.TestCase):
 
     def test_parse_match_matches_cached_json_contract(self):
         partido_id = '68c807c325015'
-        html = (RAW_DIR / f'partido_{partido_id}.html').read_text(encoding='utf-8')
-        expected = json.loads((GROUP_DIR / 'matches' / f'{partido_id}.json').read_text(encoding='utf-8'))
+        html_path = RAW_DIR / f'partido_{partido_id}.html'
+        json_path = GROUP_DIR / 'matches' / f'{partido_id}.json'
+        if not html_path.exists() or not json_path.exists():
+            self.skipTest("Cached match files not found")
+        html = html_path.read_text(encoding='utf-8')
+        expected = json.loads(json_path.read_text(encoding='utf-8'))
 
         detail = parse_match(html, partido_id)
 

@@ -47,11 +47,16 @@ def run_step_quiet(label: str, command: list[str], cwd: Path) -> bool:
 
 
 def find_available_port(preferred_port: int, host: str = "127.0.0.1", attempts: int = 20) -> int:
+    # Use OS-level binding to atomically check + reserve the port, avoiding the
+    # TOCTOU race of connect_ex-then-serve.
     for port in range(preferred_port, preferred_port + attempts):
-        with contextlib.closing(socket.socket(socket.AF_INET, socket.SOCK_STREAM)) as sock:
-            sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-            if sock.connect_ex((host, port)) != 0:
+        try:
+            with contextlib.closing(socket.socket(socket.AF_INET, socket.SOCK_STREAM)) as sock:
+                sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+                sock.bind((host, port))
                 return port
+        except OSError:
+            continue
     raise RuntimeError(f"No free port found in range {preferred_port}-{preferred_port + attempts - 1}")
 
 
@@ -121,8 +126,8 @@ def process_group(
     season: str | None = None,
     category_id: str | None = None,
     heading: str | None = None,
-) -> bool:
-    """Run crawler + stats for one group. Returns True if both steps succeeded."""
+) -> tuple[bool, Path | None]:
+    """Run crawler + stats for one group. Returns (success, group_dir)."""
     group_slug = slugify(group_name)
 
     if not skip_crawl:
@@ -138,23 +143,23 @@ def process_group(
         if heading:
             crawler_cmd.extend(["--heading", heading])
         if not run_step_quiet("crawl", crawler_cmd, repo_root):
-            return False
+            return False, None
         # Scrapy exits 0 even on spider failure — verify output was actually written.
         group_dir = _find_group_dir(repo_root, group_slug, season)
         if group_dir is None or not (group_dir / "group.json").exists():
             print("  crawl produced no output (group not found on site) — skipping", flush=True)
-            return False
+            return False, None
     else:
         group_dir = _find_group_dir(repo_root, group_slug, season)
 
     if not skip_stats:
         if group_dir is None or not (group_dir / "group.json").exists():
             print("  stats skipped — no crawl output for", group_slug, flush=True)
-            return False
+            return False, None
         if not run_step_quiet("stats", [sys.executable, "stats.py", str(group_dir)], repo_root):
-            return False
+            return False, None
 
-    return True
+    return True, group_dir
 
 
 def parse_args() -> argparse.Namespace:
@@ -197,7 +202,7 @@ def main() -> int:
 
     if not groups:
         print("No groups found. Nothing to do.", flush=True)
-        return 0
+        return 1
 
     # ------------------------------------------------------------------
     # 3. Process each group
@@ -222,7 +227,7 @@ def main() -> int:
         already_complete = existing_dir is not None and (existing_dir / "database.json").exists()
         label = "EXISTS" if already_complete else "NEW"
         print(f"\n[{idx}/{len(groups)}] [{label}] {group_name}", flush=True)
-        ok = process_group(
+        ok, group_dir = process_group(
             group_name,
             repo_root,
             skip_crawl=args.skip_crawl,
@@ -236,9 +241,8 @@ def main() -> int:
         if ok:
             print("  OK", flush=True)
             succeeded.append(group_name)
-            found_dir = _find_group_dir(repo_root, group_slug, args.season)
-            if found_dir and (found_dir / "database.json").exists():
-                succeeded_dirs.append(found_dir)
+            if group_dir and (group_dir / "database.json").exists():
+                succeeded_dirs.append(group_dir)
         else:
             print("  FAILED", flush=True)
             failed.append(group_name)

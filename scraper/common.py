@@ -404,21 +404,22 @@ def parse_match(html: str, partido_id: str) -> MatchDetail:
 
 
 def _classify_event(description: str) -> tuple[str, dict]:
-    text = description.strip()
-    if text.lower().startswith("3 punto"):
+    # Normalise: collapse whitespace, strip, lowercase for all comparisons.
+    text = re.sub(r"\s+", " ", description or "").strip().lower()
+    if text.startswith("3 punto"):
         return "made_3", {}
-    if text.lower().startswith("2 punto"):
+    if text.startswith("2 punto"):
         return "made_2", {}
-    if text.lower().startswith("tiro libre"):
+    if text.startswith("tiro libre"):
         match = _FT_RE.search(text)
         if match:
             ft_index, ft_of, status = int(match.group(1)), int(match.group(2)), match.group(3).lower()
             kind = "ft_made" if status == "metido" else "ft_missed"
             return kind, {"ft_index": ft_index, "ft_of": ft_of, "ft_made": 1 if status == "metido" else 0}
         return "ft_missed", {}
-    if "tiempo muerto" in text.lower():
+    if "tiempo muerto" in text:
         return "timeout", {}
-    if "fin de periodo" in text.lower():
+    if "fin de periodo" in text:
         return "period_end", {}
     return "other", {}
 
@@ -502,6 +503,21 @@ def write_raw(path: Path, html: str) -> None:
     path.write_text(html, encoding="utf-8")
 
 
+def detect_season(season_jornadas: dict) -> str:
+    """Derive '<year>-<yy>' season label from the earliest jornada date.
+
+    season_jornadas maps jornada numbers to ISO dates ("YYYY-MM-DD").
+    Raises ValueError if the dict is empty.
+    """
+    if not season_jornadas:
+        raise ValueError("season_jornadas is empty — cannot detect season")
+    first_date = min(season_jornadas.values())  # "YYYY-MM-DD"
+    year, month = int(first_date[:4]), int(first_date[5:7])
+    if month >= 8:
+        return f"{year}-{(year + 1) % 100:02d}"
+    return f"{year - 1}-{year % 100:02d}"
+
+
 __all__ = [
     "BASE",
     "USER_AGENT",
@@ -514,6 +530,7 @@ __all__ = [
     "SeasonCalendar",
     "TeamBox",
     "ddmmyyyy_to_monday",
+    "detect_season",
     "extract_group_id",
     "norm_text",
     "parse_calendar",

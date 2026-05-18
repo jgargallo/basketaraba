@@ -26,6 +26,7 @@ from __future__ import annotations
 import argparse
 import json
 import shutil
+import socket
 import sys
 from collections import defaultdict
 from datetime import datetime, timezone
@@ -69,6 +70,9 @@ def _download_logo(url: str, destination: Path) -> None:
         destination.write_bytes(response.read())
 
 
+_LOGO_NETWORK_ERRORS = (URLError, socket.error, socket.timeout, ConnectionError, OSError)
+
+
 def _materialize_local_logos(db: dict, out_dir: Path, season: str | None = None) -> None:
     group_name = db.get("group", {}).get("group_name") or "group"
     slug = _slugify(group_name)
@@ -90,7 +94,7 @@ def _materialize_local_logos(db: dict, out_dir: Path, season: str | None = None)
         destination = logos_dir / logo_filename
         try:
             _download_logo(remote_url, destination)
-        except URLError:
+        except _LOGO_NETWORK_ERRORS:
             team["logo_url"] = None
             continue
         team["logo_url"] = "/".join([logo_url_prefix, quote(logo_filename)])
@@ -482,14 +486,14 @@ def build_game_views(db: dict) -> dict[str, dict]:
 # ---------------------------------------------------------------------------
 
 def _season_from_path(db_path: Path) -> str | None:
-    """Extract season label from data/<season>/<group>/database.json, or None."""
-    parts = db_path.parts
-    # Expect at least: data / <season> / <group> / database.json
-    if len(parts) >= 4 and parts[-1] == "database.json":
-        candidate = parts[-3]
-        # Season looks like "2025-26" or "2024-25"
-        if re.match(r"^\d{4}-\d{2}$", candidate):
-            return candidate
+    """Extract season label from data/<season>/<group>/database.json, or None.
+
+    Works with both absolute and relative paths; inspects the directory two
+    levels above the file (i.e. db_path.parent.parent.name).
+    """
+    candidate = db_path.resolve().parent.parent.name
+    if re.match(r"^\d{4}-\d{2}$", candidate):
+        return candidate
     return None
 
 

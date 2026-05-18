@@ -29,6 +29,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import logging
 import re
 import unicodedata
 from collections import defaultdict
@@ -38,6 +39,8 @@ from difflib import SequenceMatcher
 from pathlib import Path
 
 from bs4 import BeautifulSoup
+
+log = logging.getLogger(__name__)
 
 
 # ---------------------------------------------------------------------------
@@ -87,7 +90,7 @@ def classify_event(raw: str, fallback_kind: str) -> tuple[str, dict]:
 
     Returns (event_kind, extra_fields).
     """
-    text = (raw or "").strip().lower()
+    text = re.sub(r"\s+", " ", (raw or "")).strip().lower()
 
     if text.startswith("3 punto"):
         return "made_3", {}
@@ -374,11 +377,16 @@ def build_database(in_dir: Path) -> dict:
 
         match_path = in_dir / "matches" / f"{pid}.json"
         if not match_path.exists():
+            log.warning("Match detail file missing for partido_id=%s — skipping box scores for this game", pid)
             continue
         detail = json.loads(match_path.read_text(encoding="utf-8"))
 
         home_team_id = resolve_team_id(detail["home"]["team"], detail["home"].get("logo"))
         away_team_id = resolve_team_id(detail["away"]["team"], detail["away"].get("logo"))
+        if not home_team_id:
+            log.warning("Could not resolve home team_id for match %s (name=%r)", pid, detail["home"]["team"])
+        if not away_team_id:
+            log.warning("Could not resolve away team_id for match %s (name=%r)", pid, detail["away"]["team"])
 
         date_iso = None
         if m.get("starts_at"):

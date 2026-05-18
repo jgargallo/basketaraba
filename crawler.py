@@ -43,6 +43,7 @@ from scraper.common import (
     MatchDetail,
     SeasonCalendar,
     ddmmyyyy_to_monday as _ddmmyyyy_to_monday,
+    detect_season as _detect_season,
     extract_group_id as _extract_group_id,
     norm_text as _norm,
     parse_calendar as _parse_calendar,
@@ -55,15 +56,6 @@ from scraper.common import (
 )
 
 log = logging.getLogger("basketaraba")
-
-
-def _detect_season(season_jornadas: dict) -> str:
-    """Derive '<year>-<yy>' season label from the first jornada date."""
-    first_date = min(season_jornadas.values())  # "YYYY-MM-DD"
-    year, month = int(first_date[:4]), int(first_date[5:7])
-    if month >= 8:
-        return f"{year}-{(year + 1) % 100:02d}"
-    return f"{year - 1}-{year % 100:02d}"
 
 
 def _write_metrics_file(path: Path, payload: dict) -> None:
@@ -355,12 +347,24 @@ def crawl(
     # Auto-detect season from calendar data if still unknown.
     if out_dir is None:
         season_jornadas_tmp = {str(j): m.isoformat() for j, m in sorted(mondays_by_jornada.items())}
-        if season_jornadas_tmp:
-            season = _detect_season(season_jornadas_tmp)
+        if not season_jornadas_tmp:
+            # No dated jornadas yet (pre-season or empty calendar). Derive the
+            # season from today's date using the same Aug-cutoff logic.
+            today_obj = date.today()
+            year, month = today_obj.year, today_obj.month
+            if month >= 8:
+                season = f"{year}-{(year + 1) % 100:02d}"
+            else:
+                season = f"{year - 1}-{year % 100:02d}"
+            log.warning(
+                "Calendar has no dated jornadas for '%s' — season derived from today's date: %s. "
+                "Pass --season <label> explicitly to override.",
+                group.group_name, season,
+            )
         else:
-            season = "unknown"
+            season = _detect_season(season_jornadas_tmp)
+            log.info("Season detected from calendar jornadas: %s", season)
         out_dir = out_root / season / group_slug
-        log.info("Season detected from calendar jornadas: %s", season)
 
     matches_dir = out_dir / "matches"
 
