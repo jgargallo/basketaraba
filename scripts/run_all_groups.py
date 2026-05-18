@@ -79,9 +79,13 @@ def list_groups_from_crawler(repo_root: Path, *, full_season: bool = False) -> l
 
 
 def list_groups_from_data(repo_root: Path) -> list[dict]:
-    """Return group dicts from existing data/*/database.json files."""
+    """Return group dicts from existing data/*/database.json or data/*/*/database.json files."""
     groups = []
-    for db_path in sorted((repo_root / "data").glob("*/database.json")):
+    # Prefer season-scoped layout; fall back to legacy flat layout.
+    db_paths = sorted((repo_root / "data").glob("*/*/database.json"))
+    if not db_paths:
+        db_paths = sorted((repo_root / "data").glob("*/database.json"))
+    for db_path in db_paths:
         try:
             with db_path.open() as f:
                 db = json.load(f)
@@ -93,6 +97,19 @@ def list_groups_from_data(repo_root: Path) -> list[dict]:
     return groups
 
 
+def _find_group_dir(repo_root: Path, group_slug: str, season: str | None) -> Path | None:
+    """Find where a group's data lives, checking season-scoped path first then flat."""
+    if season:
+        p = repo_root / "data" / season / group_slug
+        if p.exists():
+            return p
+    # Search any existing season subdirectory.
+    for candidate in sorted((repo_root / "data").glob(f"*/{group_slug}")):
+        if candidate.is_dir():
+            return candidate
+    return None
+
+
 def process_group(
     group_name: str,
     repo_root: Path,
@@ -101,14 +118,12 @@ def process_group(
     skip_stats: bool,
     force: bool,
     engine: str | None,
+    season: str | None = None,
     category_id: str | None = None,
     heading: str | None = None,
 ) -> bool:
     """Run crawler + stats for one group. Returns True if both steps succeeded."""
     group_slug = slugify(group_name)
-    group_dir = repo_root / "data" / group_slug
-
-    group_dir.mkdir(parents=True, exist_ok=True)
 
     if not skip_crawl:
         crawler_cmd = [sys.executable, "crawler.py", group_name]
@@ -116,6 +131,8 @@ def process_group(
             crawler_cmd.extend(["--engine", engine])
         if force:
             crawler_cmd.append("--force")
+        if season:
+            crawler_cmd.extend(["--season", season])
         if category_id:
             crawler_cmd.extend(["--category-id", category_id])
         if heading:
@@ -123,13 +140,16 @@ def process_group(
         if not run_step_quiet("crawl", crawler_cmd, repo_root):
             return False
         # Scrapy exits 0 even on spider failure — verify output was actually written.
-        if not (group_dir / "group.json").exists():
+        group_dir = _find_group_dir(repo_root, group_slug, season)
+        if group_dir is None or not (group_dir / "group.json").exists():
             print("  crawl produced no output (group not found on site) — skipping", flush=True)
             return False
+    else:
+        group_dir = _find_group_dir(repo_root, group_slug, season)
 
     if not skip_stats:
-        if not (group_dir / "group.json").exists():
-            print("  stats skipped — no crawl output in", group_dir.name, flush=True)
+        if group_dir is None or not (group_dir / "group.json").exists():
+            print("  stats skipped — no crawl output for", group_slug, flush=True)
             return False
         if not run_step_quiet("stats", [sys.executable, "stats.py", str(group_dir)], repo_root):
             return False
@@ -144,6 +164,7 @@ def parse_args() -> argparse.Namespace:
             "crawler -> stats -> web/build."
         ),
     )
+    parser.add_argument("--season", default=None, help="Season label, e.g. '2025-26' (passed to crawler; auto-detected if omitted)")
     parser.add_argument("--force", action="store_true", help="Pass --force to crawler (refresh cache)")
     parser.add_argument("--full-season", action="store_true", help="Scan all 30 past weeks when discovering groups (default: current + previous week only)")
     parser.add_argument("--engine", choices=("requests", "scrapy"), help="Override crawler engine")
@@ -164,7 +185,7 @@ def main() -> int:
     # 1. Discover groups
     # ------------------------------------------------------------------
     if args.skip_crawl:
-        print("--skip-crawl set: loading group list from existing data/*/database.json ...", flush=True)
+        print("--skip-crawl set: loading group list from existing database.json files ...", flush=True)
         groups = list_groups_from_data(repo_root)
     else:
         print("Fetching group list from crawler.py ...", flush=True)
@@ -179,21 +200,12 @@ def main() -> int:
         return 0
 
     # ------------------------------------------------------------------
-    # 2. Register directories for any newly discovered group
-    # ------------------------------------------------------------------
-    for group in groups:
-        group_name = group["name"] if isinstance(group, dict) else group
-        group_dir = repo_root / "data" / slugify(group_name)
-        if not group_dir.exists():
-            print(f"  [NEW] {group_name}  →  {group_dir.name}/", flush=True)
-            group_dir.mkdir(parents=True, exist_ok=True)
-
-    # ------------------------------------------------------------------
     # 3. Process each group
     # ------------------------------------------------------------------
     print(f"\n=== Processing {len(groups)} group(s) ===", flush=True)
 
     succeeded: list[str] = []
+    succeeded_dirs: list[Path] = []
     failed: list[str] = []
 
     for idx, group in enumerate(groups, start=1):
@@ -205,8 +217,9 @@ def main() -> int:
             group_name = group
             category_id = None
             heading = None
-        group_dir = repo_root / "data" / slugify(group_name)
-        already_complete = (group_dir / "database.json").exists()
+        group_slug = slugify(group_name)
+        existing_dir = _find_group_dir(repo_root, group_slug, args.season)
+        already_complete = existing_dir is not None and (existing_dir / "database.json").exists()
         label = "EXISTS" if already_complete else "NEW"
         print(f"\n[{idx}/{len(groups)}] [{label}] {group_name}", flush=True)
         ok = process_group(
@@ -216,29 +229,29 @@ def main() -> int:
             skip_stats=args.skip_stats,
             force=args.force,
             engine=args.engine,
+            season=args.season,
             category_id=category_id,
             heading=heading,
         )
         if ok:
             print("  OK", flush=True)
             succeeded.append(group_name)
+            found_dir = _find_group_dir(repo_root, group_slug, args.season)
+            if found_dir and (found_dir / "database.json").exists():
+                succeeded_dirs.append(found_dir)
         else:
             print("  FAILED", flush=True)
             failed.append(group_name)
 
     # ------------------------------------------------------------------
-    # 3. Build site from all succeeded groups
+    # 4. Build site from all succeeded groups
     # ------------------------------------------------------------------
     print(f"\n=== Summary ===", flush=True)
     print(f"Succeeded: {len(succeeded)}  {', '.join(succeeded) if succeeded else '-'}", flush=True)
     print(f"Failed:    {len(failed)}  {', '.join(failed) if failed else '-'}", flush=True)
 
     if not args.skip_build:
-        db_paths = [
-            str(repo_root / "data" / slugify(name) / "database.json")
-            for name in succeeded
-            if (repo_root / "data" / slugify(name) / "database.json").exists()
-        ]
+        db_paths = [str(d / "database.json") for d in succeeded_dirs if (d / "database.json").exists()]
         if not db_paths:
             print("\nNo database files available; skipping web/build.py.", flush=True)
         else:

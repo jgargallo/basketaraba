@@ -69,9 +69,15 @@ def _download_logo(url: str, destination: Path) -> None:
         destination.write_bytes(response.read())
 
 
-def _materialize_local_logos(db: dict, out_dir: Path) -> None:
+def _materialize_local_logos(db: dict, out_dir: Path, season: str | None = None) -> None:
     group_name = db.get("group", {}).get("group_name") or "group"
-    logos_dir = out_dir / "assets" / "logos" / _slugify(group_name)
+    slug = _slugify(group_name)
+    if season:
+        logos_dir = out_dir / "assets" / "logos" / season / slug
+        logo_url_prefix = "/".join(["assets", "logos", season, slug])
+    else:
+        logos_dir = out_dir / "assets" / "logos" / slug
+        logo_url_prefix = "/".join(["assets", "logos", slug])
     logos_dir.mkdir(parents=True, exist_ok=True)
 
     for team in db.get("teams", []):
@@ -87,7 +93,7 @@ def _materialize_local_logos(db: dict, out_dir: Path) -> None:
         except URLError:
             team["logo_url"] = None
             continue
-        team["logo_url"] = "/".join(["assets", "logos", _slugify(group_name), quote(logo_filename)])
+        team["logo_url"] = "/".join([logo_url_prefix, quote(logo_filename)])
 
 
 def _index_by(items: list[dict], key: str) -> dict[str, dict]:
@@ -475,16 +481,31 @@ def build_game_views(db: dict) -> dict[str, dict]:
 # Build
 # ---------------------------------------------------------------------------
 
-def _build_group(db: dict, out_dir: Path) -> dict:
+def _season_from_path(db_path: Path) -> str | None:
+    """Extract season label from data/<season>/<group>/database.json, or None."""
+    parts = db_path.parts
+    # Expect at least: data / <season> / <group> / database.json
+    if len(parts) >= 4 and parts[-1] == "database.json":
+        candidate = parts[-3]
+        # Season looks like "2025-26" or "2024-25"
+        if re.match(r"^\d{4}-\d{2}$", candidate):
+            return candidate
+    return None
+
+
+def _build_group(db: dict, out_dir: Path, season: str | None = None) -> dict:
     """Build one group's static subtree. Returns metadata for index.json."""
     group_slug = _slugify(db["group"]["group_name"])
-    group_dir = out_dir / "data" / group_slug
+    if season:
+        group_dir = out_dir / "data" / season / group_slug
+    else:
+        group_dir = out_dir / "data" / group_slug
     group_dir.mkdir(parents=True, exist_ok=True)
     (group_dir / "teams").mkdir(exist_ok=True)
     (group_dir / "players").mkdir(exist_ok=True)
     (group_dir / "games").mkdir(exist_ok=True)
 
-    _materialize_local_logos(db, out_dir)
+    _materialize_local_logos(db, out_dir, season=season)
 
     league = build_league(db)
     (group_dir / "league.json").write_text(
@@ -511,6 +532,7 @@ def _build_group(db: dict, out_dir: Path) -> dict:
 
     completed = sum(1 for g in db["games"] if g["status"] == "FINALIZADO")
     return {
+        "season": season,
         "id": group_slug,
         "name": db["group"]["group_name"],
         "built_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
@@ -524,8 +546,32 @@ def _build_group(db: dict, out_dir: Path) -> dict:
 
 
 def _build_index(groups_meta: list[dict], out_dir: Path) -> None:
+    # Build season-aware structure: {current_season, seasons: {<season>: {label, groups: [...]}}}
+    seasons: dict[str, list[dict]] = {}
+    for meta in groups_meta:
+        s = meta.get("season") or "unknown"
+        seasons.setdefault(s, []).append({
+            "slug": meta["id"],
+            "display_name": meta["name"],
+        })
+
+    sorted_seasons = sorted(seasons.keys(), reverse=True)
+    current_season = sorted_seasons[0] if sorted_seasons else "unknown"
+
+    index = {
+        "current_season": current_season,
+        "seasons": {
+            s: {
+                "label": f"Temporada {s}",
+                "groups": seasons[s],
+            }
+            for s in sorted_seasons
+        },
+        # Legacy flat list for backward compatibility.
+        "groups": groups_meta,
+    }
     (out_dir / "data" / "index.json").write_text(
-        json.dumps({"groups": groups_meta}, ensure_ascii=False, indent=2),
+        json.dumps(index, ensure_ascii=False, indent=2),
         encoding="utf-8",
     )
 
@@ -551,9 +597,13 @@ def main() -> int:
     args = p.parse_args()
 
     if args.all_groups:
-        db_paths = sorted(Path("data").glob("*/database.json"))
+        # Support both data/<season>/<group>/database.json and legacy data/<group>/database.json
+        db_paths = sorted(Path("data").glob("*/*/database.json"))
         if not db_paths:
-            print("No data/*/database.json files found.", file=sys.stderr)
+            # Fall back to legacy flat layout
+            db_paths = sorted(Path("data").glob("*/database.json"))
+        if not db_paths:
+            print("No data/*/database.json or data/*/*/database.json files found.", file=sys.stderr)
             return 1
     else:
         db_paths = args.databases
@@ -575,11 +625,13 @@ def main() -> int:
 
     groups_meta = []
     for db_path in db_paths:
+        season = _season_from_path(db_path)
         db = json.loads(db_path.read_text(encoding="utf-8"))
-        meta = _build_group(db, args.out)
+        meta = _build_group(db, args.out, season=season)
         groups_meta.append(meta)
+        season_label = f"{season}/" if season else ""
         print(
-            f"  [{meta['id']}] "
+            f"  [{season_label}{meta['id']}] "
             f"teams={meta['stats']['teams']} "
             f"players={meta['stats']['players']} "
             f"games={meta['stats']['games']} "

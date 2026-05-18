@@ -21,6 +21,7 @@ def main(argv: Iterable[str] | None = None) -> int:
     parser.add_argument("--sleep", type=float, default=None, help="Override Scrapy download delay in seconds")
     parser.add_argument("--force", action="store_true", help="Re-download even if cached files exist")
     parser.add_argument("-v", "--verbose", action="store_true", help="Enable verbose Scrapy logging")
+    parser.add_argument("--season", default=None, help="Season label, e.g. '2025-26' (auto-detected if omitted)")
     parser.add_argument("--category-id", default=None, help="Pre-resolved category ID (skips jornada page)")
     parser.add_argument("--heading", default=None, help="Raw h3 heading text for group matching")
     args = parser.parse_args(list(argv) if argv is not None else None)
@@ -45,6 +46,7 @@ def main(argv: Iterable[str] | None = None) -> int:
         group=args.group,
         out=str(args.out),
         force=args.force,
+        season=args.season,
         category_id=args.category_id,
         heading=args.heading,
     )

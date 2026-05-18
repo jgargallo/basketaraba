@@ -68,6 +68,7 @@ class BasketarabaSpider(scrapy.Spider):
         force: str | bool = False,
         category_id: str | None = None,
         heading: str | None = None,
+        season: str | None = None,
         *args,
         **kwargs,
     ):
@@ -78,6 +79,7 @@ class BasketarabaSpider(scrapy.Spider):
         self.force = str(force).lower() in {"1", "true", "yes", "on"}
         self.target_group = _norm(heading) if heading else _norm(group)
         self._preset_category_id: str | None = category_id
+        self._season: str | None = season
         self.group_ref: GroupRef | None = None
         self.out_dir: Path | None = None
         self.raw_dir: Path | None = None
@@ -138,9 +140,30 @@ class BasketarabaSpider(scrapy.Spider):
                 group_name=canonical,
                 group_id=group_id,
             )
-            self.out_dir = self.out_root / _slugify(self.group_ref.group_name)
-            self.raw_dir = self.out_dir / "raw"
-            self.matches_dir = self.out_dir / "matches"
+            group_slug = _slugify(self.group_ref.group_name)
+            # Raw cache stays under flat legacy path (gitignored).
+            self.raw_dir = self.out_root / group_slug / "raw"
+
+            # Try to resolve season from an explicit flag or existing group.json.
+            detected_season = self._season
+            if detected_season is None:
+                legacy_group_json = self.out_root / group_slug / "group.json"
+                if legacy_group_json.exists():
+                    try:
+                        existing = json.loads(legacy_group_json.read_text(encoding="utf-8"))
+                        sj = existing.get("season_jornadas", {})
+                        if sj:
+                            detected_season = self._detect_season(sj)
+                            self.logger.info("Season auto-detected from existing group.json: %s", detected_season)
+                    except Exception:
+                        pass
+
+            if detected_season:
+                self.out_dir = self.out_root / detected_season / group_slug
+            else:
+                # Will be set after calendar load in parse_calendar_page.
+                self.out_dir = None
+            self.matches_dir = None  # Set after out_dir is resolved.
             yield from self._load_calendar()
             return
 
@@ -167,6 +190,16 @@ class BasketarabaSpider(scrapy.Spider):
         self.mondays_by_jornada = {}
         for match in self.calendar.matches:
             self.mondays_by_jornada.setdefault(match.jornada, _ddmmyyyy_to_monday(match.jornada_date))
+
+        # Finalize out_dir if it wasn't set during parse_group_week.
+        if self.out_dir is None:
+            assert self.group_ref is not None
+            group_slug = _slugify(self.group_ref.group_name)
+            sj_tmp = {str(j): m.isoformat() for j, m in sorted(self.mondays_by_jornada.items())}
+            season = self._detect_season(sj_tmp) if sj_tmp else "unknown"
+            self.out_dir = self.out_root / season / group_slug
+            self.logger.info("Season detected from calendar jornadas: %s", season)
+        self.matches_dir = self.out_dir / "matches"
 
         self.name_to_team_id = {name: team_id for team_id, name in self.calendar.teams.items()}
         self.logo_to_team_id = {}
@@ -218,6 +251,14 @@ class BasketarabaSpider(scrapy.Spider):
         _write_raw(self.raw_dir / f"partido_{partido_id}.html", response.text)
         detail = _parse_match(response.text, partido_id)
         _write_json(self.matches_dir / f"{partido_id}.json", detail)
+
+    @staticmethod
+    def _detect_season(season_jornadas: dict) -> str:
+        first_date = min(season_jornadas.values())
+        year, month = int(first_date[:4]), int(first_date[5:7])
+        if month >= 8:
+            return f"{year}-{(year + 1) % 100:02d}"
+        return f"{year - 1}-{year % 100:02d}"
 
     def _category_name(self) -> str:
         if "-GRUPO" in self.target_group:

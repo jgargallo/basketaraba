@@ -10,7 +10,9 @@ const LOSS = '#f43f5e';
 
 const $view = () => document.getElementById('view');
 const cache = new Map();
-let groups = [];
+let seasonIndex = {};   // full seasons dict from index.json
+let groups = [];        // groups for currentSeason
+let currentSeason = null;
 let currentGroup = null;
 const charts = [];
 
@@ -61,13 +63,53 @@ async function loadJSON(path) {
 }
 
 function groupPath(path) {
-  return `data/${currentGroup}/${path}`;
+  const prefix = currentSeason ? `data/${currentSeason}/${currentGroup}` : `data/${currentGroup}`;
+  return `${prefix}/${path}`;
 }
 
 async function loadGroups() {
   const data = await loadJSON('data/index.json');
-  groups = data.groups || [];
+  // New season-aware structure: {current_season, seasons: {...}}
+  if (data.seasons) {
+    seasonIndex = data.seasons;
+    currentSeason = data.current_season || Object.keys(data.seasons).sort().reverse()[0] || null;
+    const seasonData = currentSeason ? (data.seasons[currentSeason] || {}) : {};
+    groups = (seasonData.groups || []).map(g => ({ id: g.slug, name: g.display_name }));
+  } else {
+    // Legacy flat structure fallback
+    seasonIndex = {};
+    currentSeason = null;
+    groups = data.groups || [];
+  }
   if (groups.length > 0 && !currentGroup) currentGroup = groups[0].id;
+}
+
+function _populateSeasonSelector() {
+  const seasons = Object.keys(seasonIndex).sort().reverse();
+  document.querySelectorAll('.season-select').forEach(sel => {
+    sel.innerHTML = seasons.map(s =>
+      `<option value="${s}"${s === currentSeason ? ' selected' : ''}>${escapeHtml(seasonIndex[s].label || s)}</option>`
+    ).join('');
+  });
+}
+
+function _populateGroupSelector() {
+  const opts = groups.map(g =>
+    `<option value="${g.id}"${g.id === currentGroup ? ' selected' : ''}>${escapeHtml(g.name)}</option>`
+  ).join('');
+  document.querySelectorAll('.group-select').forEach(sel => { sel.innerHTML = opts; });
+}
+
+async function setSeason(season) {
+  currentSeason = season;
+  const seasonData = seasonIndex[season] || {};
+  groups = (seasonData.groups || []).map(g => ({ id: g.slug, name: g.display_name }));
+  currentGroup = groups.length > 0 ? groups[0].id : null;
+  _populateSeasonSelector();
+  _populateGroupSelector();
+  if (currentGroup) {
+    location.hash = `#/group/${currentGroup}/league`;
+  }
 }
 
 async function setGroup(slug) {
@@ -174,12 +216,26 @@ async function bootstrapChrome() {
   document.getElementById('group-stats').textContent =
     `${lg.totals.teams} equipos · ${lg.totals.players} jugadores · ${lg.totals.completed}/${lg.totals.games} partidos jugados`;
 
+  // Populate season selectors (only shown when more than one season exists).
+  const seasonKeys = Object.keys(seasonIndex).sort().reverse();
+  document.querySelectorAll('.season-select').forEach(sel => {
+    if (seasonKeys.length <= 1) {
+      sel.closest('.season-select-wrapper')?.classList.add('hidden');
+      sel.classList.add('hidden');
+    } else {
+      sel.innerHTML = seasonKeys.map(s =>
+        `<option value="${s}"${s === currentSeason ? ' selected' : ''}>${escapeHtml(seasonIndex[s].label || s)}</option>`
+      ).join('');
+      sel.addEventListener('change', () => {
+        if (sel.value) setSeason(sel.value);
+        closeMobileMenu();
+      });
+    }
+  });
+
   // Populate group selectors.
-  const groupOpts = groups.map(g =>
-    `<option value="${g.id}"${g.id === currentGroup ? ' selected' : ''}>${escapeHtml(g.name)}</option>`
-  ).join('');
+  _populateGroupSelector();
   document.querySelectorAll('.group-select').forEach(sel => {
-    sel.innerHTML = groupOpts;
     sel.addEventListener('change', () => {
       if (sel.value) location.hash = `#/group/${sel.value}/league`;
       closeMobileMenu();

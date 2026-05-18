@@ -57,6 +57,15 @@ from scraper.common import (
 log = logging.getLogger("basketaraba")
 
 
+def _detect_season(season_jornadas: dict) -> str:
+    """Derive '<year>-<yy>' season label from the first jornada date."""
+    first_date = min(season_jornadas.values())  # "YYYY-MM-DD"
+    year, month = int(first_date[:4]), int(first_date[5:7])
+    if month >= 8:
+        return f"{year}-{(year + 1) % 100:02d}"
+    return f"{year - 1}-{year % 100:02d}"
+
+
 def _write_metrics_file(path: Path, payload: dict) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True), encoding="utf-8")
@@ -284,6 +293,7 @@ def crawl(
     sleep: float,
     force: bool,
     *,
+    season: str | None = None,
     category_id: str | None = None,
     group_id: str | None = None,
     heading: str | None = None,
@@ -300,9 +310,28 @@ def crawl(
     log.info("→ category_id=%s group_id=%s", group.category_id, group.group_id)
     resolved_at = time.monotonic()
 
-    out_dir = out_root / _slugify(group.group_name)
-    raw_dir = out_dir / "raw"
-    matches_dir = out_dir / "matches"
+    group_slug = _slugify(group.group_name)
+    # Raw cache lives under the flat legacy path (gitignored — no season subdir needed).
+    raw_dir = out_root / group_slug / "raw"
+
+    # If season was passed explicitly we can set out_dir immediately.
+    # Otherwise we defer until we have mondays_by_jornada (post-calendar-load).
+    out_dir: Path | None = None
+    if season is not None:
+        out_dir = out_root / season / group_slug
+
+    # Also check legacy flat path for an existing group.json (pre-migration run).
+    legacy_dir = out_root / group_slug
+    if out_dir is None and (legacy_dir / "group.json").exists():
+        try:
+            existing = json.loads((legacy_dir / "group.json").read_text(encoding="utf-8"))
+            sj = existing.get("season_jornadas", {})
+            if sj:
+                season = _detect_season(sj)
+                out_dir = out_root / season / group_slug
+                log.info("Season auto-detected from existing group.json: %s", season)
+        except Exception:
+            pass
 
     # Calendar
     calendar_raw_path = raw_dir / "calendario.html"
@@ -322,6 +351,18 @@ def crawl(
     mondays_by_jornada: dict[int, date] = {}
     for cm in calendar.matches:
         mondays_by_jornada.setdefault(cm.jornada, _ddmmyyyy_to_monday(cm.jornada_date))
+
+    # Auto-detect season from calendar data if still unknown.
+    if out_dir is None:
+        season_jornadas_tmp = {str(j): m.isoformat() for j, m in sorted(mondays_by_jornada.items())}
+        if season_jornadas_tmp:
+            season = _detect_season(season_jornadas_tmp)
+        else:
+            season = "unknown"
+        out_dir = out_root / season / group_slug
+        log.info("Season detected from calendar jornadas: %s", season)
+
+    matches_dir = out_dir / "matches"
 
     # Build team-id lookups so we can map every entry (weekly or calendar-only)
     # to canonical team_ids.
@@ -655,6 +696,7 @@ def main(argv: Iterable[str] | None = None) -> int:
     p.add_argument("--metrics-history-dir", type=Path,
                    help="Write timestamped metrics snapshots under the given root directory")
     p.add_argument("--sleep", type=float, default=0.4, help="Seconds between HTTP requests (default: 0.4)")
+    p.add_argument("--season", default=None, help="Season label, e.g. '2025-26' (auto-detected if omitted)")
     p.add_argument("--force", action="store_true", help="Re-download even if cached files exist")
     p.add_argument("--category-id", default=None, help="Pre-resolved category ID (skips jornada page)")
     p.add_argument("--group-id", default=None, help="Pre-resolved group ID (skips dameJornada scan; requires --category-id)")
@@ -703,9 +745,12 @@ def main(argv: Iterable[str] | None = None) -> int:
             delegated_argv.extend(["--category-id", args.category_id])
         if args.heading is not None:
             delegated_argv.extend(["--heading", args.heading])
+        if args.season is not None:
+            delegated_argv.extend(["--season", args.season])
         return scrapy_main(delegated_argv)
 
     metrics = crawl(args.group, args.out, args.sleep, args.force,
+                    season=args.season,
                     category_id=args.category_id, group_id=args.group_id, heading=args.heading)
     if args.metrics_out is not None:
         _write_metrics_file(args.metrics_out, metrics)
