@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 import json
 import time
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 from pathlib import Path
 
 import scrapy
@@ -32,10 +32,21 @@ def _write_metrics_file(path: Path, payload: dict) -> None:
     path.write_text(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True), encoding="utf-8")
 
 
+def _write_metrics_snapshot(root: Path, group_name: str, payload: dict) -> Path:
+    timestamp = datetime.now()
+    snapshot_path = root / _slugify(group_name) / timestamp.strftime("%Y-%m-%d") / f"{timestamp.strftime('%H%M%S')}_scrapy.json"
+    _write_metrics_file(snapshot_path, payload)
+    return snapshot_path
+
+
 def _emit_metrics(metrics: dict) -> None:
     metrics_out = os.environ.get("BASKETARABA_METRICS_OUT")
     if metrics_out:
         _write_metrics_file(Path(metrics_out), metrics)
+    metrics_history_dir = os.environ.get("BASKETARABA_METRICS_HISTORY_DIR")
+    if metrics_history_dir:
+        snapshot_path = _write_metrics_snapshot(Path(metrics_history_dir), metrics["group"], metrics)
+        print(f"METRICS_SNAPSHOT: {snapshot_path}", flush=True)
     if os.environ.get("BASKETARABA_EMIT_METRICS_JSON") == "1":
         print(f"METRICS_JSON: {json.dumps(metrics, sort_keys=True)}", flush=True)
 
@@ -338,6 +349,7 @@ class BasketarabaSpider(scrapy.Spider):
         index_finalized_at = self.index_finalized_at or finished_at
         metrics = {
             "engine": "scrapy",
+            "group": self.group_name,
             "reason": reason,
             "scheduled_network_requests": self.network_requests_scheduled,
             "cached_calendar": self.cached_calendar_reads,

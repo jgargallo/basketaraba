@@ -28,7 +28,7 @@ import os
 import subprocess
 import sys
 import time
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 from pathlib import Path
 from typing import Iterable
 
@@ -60,6 +60,13 @@ log = logging.getLogger("basketaraba")
 def _write_metrics_file(path: Path, payload: dict) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True), encoding="utf-8")
+
+
+def _write_metrics_snapshot(root: Path, group_name: str, label: str, payload: dict) -> Path:
+    timestamp = datetime.now()
+    snapshot_path = root / _slugify(group_name) / timestamp.strftime("%Y-%m-%d") / f"{timestamp.strftime('%H%M%S')}_{label}.json"
+    _write_metrics_file(snapshot_path, payload)
+    return snapshot_path
 
 
 def _emit_metrics(metrics: dict) -> None:
@@ -455,6 +462,19 @@ def compare_engines(group_name: str, out_root: Path, sleep: float, force: bool, 
                 "deltas": deltas,
             },
         )
+    metrics_history_dir = os.environ.get("BASKETARABA_METRICS_HISTORY_DIR")
+    if metrics_history_dir:
+        snapshot_path = _write_metrics_snapshot(
+            Path(metrics_history_dir),
+            group_name,
+            "compare",
+            {
+                "requests": requests_metrics,
+                "scrapy": scrapy_metrics,
+                "deltas": deltas,
+            },
+        )
+        log.info("Metrics snapshot written to %s", snapshot_path)
     return 0
 
 
@@ -471,6 +491,8 @@ def main(argv: Iterable[str] | None = None) -> int:
     p.add_argument("--compare-engines", action="store_true",
                    help="Run both engines sequentially and print a compact comparison")
     p.add_argument("--metrics-out", type=Path, help="Write run metrics to a JSON file")
+    p.add_argument("--metrics-history-dir", type=Path,
+                   help="Write timestamped metrics snapshots under the given root directory")
     p.add_argument("--sleep", type=float, default=0.4, help="Seconds between HTTP requests (default: 0.4)")
     p.add_argument("--force", action="store_true", help="Re-download even if cached files exist")
     p.add_argument("-v", "--verbose", action="store_true")
@@ -483,6 +505,11 @@ def main(argv: Iterable[str] | None = None) -> int:
     )
 
     log.info("Selected crawler engine: %s", args.engine)
+
+    if args.metrics_history_dir is not None:
+        os.environ["BASKETARABA_METRICS_HISTORY_DIR"] = str(args.metrics_history_dir)
+    else:
+        os.environ.pop("BASKETARABA_METRICS_HISTORY_DIR", None)
 
     if args.compare_engines:
         return compare_engines(args.group, args.out, args.sleep, args.force, args.verbose, args.metrics_out)
@@ -497,11 +524,16 @@ def main(argv: Iterable[str] | None = None) -> int:
             delegated_argv.append("--verbose")
         if args.metrics_out is not None:
             delegated_argv.extend(["--metrics-out", str(args.metrics_out)])
+        if args.metrics_history_dir is not None:
+            delegated_argv.extend(["--metrics-history-dir", str(args.metrics_history_dir)])
         return scrapy_main(delegated_argv)
 
     metrics = crawl(args.group, args.out, args.sleep, args.force)
     if args.metrics_out is not None:
         _write_metrics_file(args.metrics_out, metrics)
+    if args.metrics_history_dir is not None:
+        snapshot_path = _write_metrics_snapshot(args.metrics_history_dir, args.group, "requests", metrics)
+        log.info("Metrics snapshot written to %s", snapshot_path)
     return 0
 
 

@@ -159,7 +159,7 @@ Actualización del tramo:
   contrato real de la fixture, no un orden accidental
 - el test de `parse_match(...)` se mantuvo para comparar contra un JSON ya
   generado y fijar mejor el contrato del detalle por partido
-- resultado final validado: `python -m unittest test_scraper_common.py`
+- resultado final validado: `python -m unittest test.test_scraper_common`
   terminó con `Ran 3 tests ... OK`
 
 Cobertura práctica añadida en este tramo:
@@ -205,11 +205,11 @@ Cobertura añadida en regresión:
 Validación prevista para este tramo:
 
 - `python crawler.py "SENIOR MASCULINA 3ª-GRUPO A" --engine scrapy`
-- `python -m unittest test_scraper_common.py`
+- `python -m unittest test.test_scraper_common`
 
 Resultado del tramo:
 
-- `python -m unittest test_scraper_common.py` terminó con `Ran 4 tests ... OK`
+- `python -m unittest test.test_scraper_common` terminó con `Ran 4 tests ... OK`
 - la validación del engine Scrapy confirmó:
   - `Calendar: 12 teams, 132 matches across 22 jornadas`
   - `Index: 132 matches (4 from calendar-only, no acta)`
@@ -254,11 +254,11 @@ Validación prevista para este tramo:
 - `python crawler.py "SENIOR MASCULINA 3ª-GRUPO A"`
 - `python crawler.py "SENIOR MASCULINA 3ª-GRUPO A" --engine scrapy`
 - `BASKETARABA_DEFAULT_ENGINE=scrapy python crawler.py "SENIOR MASCULINA 3ª-GRUPO A" --help`
-- `python -m unittest test_scraper_common.py test_scrapy_retry.py`
+- `python -m unittest test.test_scraper_common test.test_scrapy_retry`
 
 Resultado del tramo:
 
-- `python -m unittest test_scraper_common.py test_scrapy_retry.py`
+- `python -m unittest test.test_scraper_common test.test_scrapy_retry`
   terminó con `Ran 5 tests ... OK`
 - `python crawler.py "SENIOR MASCULINA 3ª-GRUPO A"` produjo un resumen
   comparable para el engine clásico:
@@ -316,7 +316,7 @@ Trabajo adicional del tramo:
 
 Resultado del tramo:
 
-- `python -m unittest test_scraper_common.py test_scrapy_retry.py`
+- `python -m unittest test.test_scraper_common test.test_scrapy_retry`
   terminó con `Ran 5 tests ... OK`
 - `python crawler.py "SENIOR MASCULINA 3ª-GRUPO A" --compare-engines`
   produjo una comparación compacta válida, por ejemplo:
@@ -407,3 +407,72 @@ Conclusión de migración:
 - el contrato de salida permanece estable para `stats.py` y `web/build.py`
 - desde este punto la migración a Scrapy queda cerrada a nivel funcional;
   lo que sigue ya es endurecimiento operativo y observabilidad, no migración
+
+## Trabajo posterior a la migración: observabilidad histórica y endurecimiento
+
+### 1. Snapshots históricos de métricas
+
+Trabajo realizado:
+
+- `crawler.py` y `scraper/run.py` aceptan ahora `--metrics-history-dir`
+- el engine `requests`, el engine `scrapy` y el modo `--compare-engines`
+  escriben snapshots timestampados bajo una raíz elegida por el usuario
+- el layout generado es `<root>/<group>/<YYYY-MM-DD>/<HHMMSS>_<label>.json`
+
+Objetivo:
+
+- conservar una historia de rendimiento por grupo y día sin sobrescribir el
+  último JSON de `--metrics-out`
+- mantener la misma capacidad tanto en la ruta clásica como en la delegada a
+  Scrapy y en el modo compare
+
+Validación prevista:
+
+- `python crawler.py "SENIOR MASCULINA 3ª-GRUPO A" --metrics-history-dir ...`
+- `python crawler.py "SENIOR MASCULINA 3ª-GRUPO A" --compare-engines --metrics-history-dir ...`
+
+Resultado del tramo:
+
+- `python crawler.py "SENIOR MASCULINA 3ª-GRUPO A" --metrics-history-dir /tmp/basketaraba-metrics-history`
+  escribió un snapshot Scrapy válido en:
+  - `/tmp/basketaraba-metrics-history/senior-masculina-3a-grupo-a/2026-05-18/115827_scrapy.json`
+- `python crawler.py "SENIOR MASCULINA 3ª-GRUPO A" --compare-engines --metrics-history-dir /tmp/basketaraba-metrics-history`
+  escribió un snapshot compare válido en:
+  - `/tmp/basketaraba-metrics-history/senior-masculina-3a-grupo-a/2026-05-18/115832_compare.json`
+
+Hallazgo y corrección local durante la validación:
+
+- la primera versión de la ruta Scrapy no incluía el nombre del grupo dentro
+  del payload de métricas, así que el snapshot histórico no podía construir la
+  ruta por grupo
+- corrección aplicada: la spider ahora emite `group: self.group_name` dentro de
+  sus métricas finales y usa ese valor para el snapshot
+
+### 2. Endurecimiento adicional de la regresión de red
+
+Trabajo realizado:
+
+- el test de retry existente se refactorizó para reutilizar una sonda común
+- se añadió un segundo caso transitorio para `429 Too Many Requests`
+- se añadió una regresión de configuración para fijar que Scrapy mantiene
+  activados `RETRY_ENABLED`, `AUTOTHROTTLE_ENABLED` y los códigos de retry
+  relevantes (`429`, `503`)
+
+Objetivo:
+
+- fijar en tests dos fallos transitorios típicos de red para el crawler
+- detectar regresiones de configuración en el endurecimiento de Scrapy aunque
+  el crawler siga terminando con éxito sobre caché
+
+Validación ejecutada:
+
+- `python -m unittest test.test_scrapy_retry test.test_scraper_common`
+
+Resultado del tramo:
+
+- la suite terminó con `Ran 7 tests ... OK`
+- quedan cubiertos:
+  - retry sobre `503`
+  - retry sobre `429`
+  - regresión de configuración sobre `RETRY_ENABLED`, `RETRY_HTTP_CODES` y
+    `AUTOTHROTTLE_ENABLED`

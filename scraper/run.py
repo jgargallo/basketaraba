@@ -16,6 +16,8 @@ def main(argv: Iterable[str] | None = None) -> int:
     parser.add_argument("group", help="Group name, e.g. 'SENIOR MASCULINA 3ª-GRUPO A'")
     parser.add_argument("--out", type=Path, default=Path("data"), help="Output root directory (default: ./data)")
     parser.add_argument("--metrics-out", type=Path, help="Write run metrics to a JSON file")
+    parser.add_argument("--metrics-history-dir", type=Path,
+                        help="Write timestamped metrics snapshots under the given root directory")
     parser.add_argument("--sleep", type=float, default=None, help="Override Scrapy download delay in seconds")
     parser.add_argument("--force", action="store_true", help="Re-download even if cached files exist")
     parser.add_argument("-v", "--verbose", action="store_true", help="Enable verbose Scrapy logging")
@@ -27,6 +29,10 @@ def main(argv: Iterable[str] | None = None) -> int:
         os.environ["BASKETARABA_METRICS_OUT"] = str(args.metrics_out)
     else:
         os.environ.pop("BASKETARABA_METRICS_OUT", None)
+    if args.metrics_history_dir is not None:
+        os.environ["BASKETARABA_METRICS_HISTORY_DIR"] = str(args.metrics_history_dir)
+    else:
+        os.environ.pop("BASKETARABA_METRICS_HISTORY_DIR", None)
     if args.sleep is not None:
         settings.set("DOWNLOAD_DELAY", args.sleep, priority="cmdline")
     if args.verbose:

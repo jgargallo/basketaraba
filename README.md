@@ -49,6 +49,7 @@ python crawler.py "SENIOR MASCULINA 3ª-GRUPO A" --compare-engines
 # 1f. Persist metrics from one run or from a comparison
 python crawler.py "SENIOR MASCULINA 3ª-GRUPO A" --metrics-out /tmp/requests_metrics.json
 python crawler.py "SENIOR MASCULINA 3ª-GRUPO A" --compare-engines --metrics-out /tmp/compare_metrics.json
+python crawler.py "SENIOR MASCULINA 3ª-GRUPO A" --metrics-history-dir /tmp/basketaraba-metrics-history
 
 # Alternative: run the embedded Scrapy spider
 python -m scraper.run "SENIOR MASCULINA 3ª-GRUPO A"
@@ -70,8 +71,8 @@ Downloads the season schedule, every match's player stats, and the full
 play-by-play log for the group passed as argument.
 
 ```
-python crawler.py "SENIOR MASCULINA 3ª-GRUPO A" [--out data] [--engine requests|scrapy] [--metrics-out path.json] [--sleep 0.4] [--force] [-v]
-python crawler.py "SENIOR MASCULINA 3ª-GRUPO A" [--compare-engines] [--out data] [--metrics-out path.json] [--sleep 0.4] [--force] [-v]
+python crawler.py "SENIOR MASCULINA 3ª-GRUPO A" [--out data] [--engine requests|scrapy] [--metrics-out path.json] [--metrics-history-dir dir] [--sleep 0.4] [--force] [-v]
+python crawler.py "SENIOR MASCULINA 3ª-GRUPO A" [--compare-engines] [--out data] [--metrics-out path.json] [--metrics-history-dir dir] [--sleep 0.4] [--force] [-v]
 ```
 
 How it works:
@@ -104,6 +105,10 @@ If `--metrics-out` is provided, `crawler.py` writes metrics to JSON. In compare
 mode the file contains `requests`, `scrapy`, and `deltas`; in single-engine
 mode it contains that run's metrics only.
 
+If `--metrics-history-dir` is provided, `crawler.py` also writes timestamped
+snapshots under `<dir>/<group>/<YYYY-MM-DD>/`, using `*_requests.json`,
+`*_scrapy.json`, or `*_compare.json` depending on the execution mode.
+
 The Scrapy path can also be stress-tested through the same entrypoint with a
 real network refresh, for example:
 
@@ -117,7 +122,7 @@ The repository also includes an embedded Scrapy project that targets the same
 site and writes the same output layout as `crawler.py`.
 
 ```
-python -m scraper.run "SENIOR MASCULINA 3ª-GRUPO A" [--out data] [--metrics-out path.json] [--force]
+python -m scraper.run "SENIOR MASCULINA 3ª-GRUPO A" [--out data] [--metrics-out path.json] [--metrics-history-dir dir] [--force]
 scrapy crawl basketaraba -a group="SENIOR MASCULINA 3ª-GRUPO A" -a out=data -a force=false
 ```
 

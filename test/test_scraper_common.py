@@ -6,7 +6,7 @@ from pathlib import Path
 
 from scraper.common import parse_calendar, parse_match, parse_week_jornada
 
-ROOT = Path(__file__).resolve().parent
+ROOT = Path(__file__).resolve().parent.parent
 GROUP_DIR = ROOT / "data" / "senior-masculina-3a-grupo-a"
 RAW_DIR = GROUP_DIR / "raw"
 
@@ -90,6 +90,7 @@ class ScraperCommonRegressionTests(unittest.TestCase):
                 for entry in calendar_only
             ],
         )
+
 
 if __name__ == '__main__':
     unittest.main()
