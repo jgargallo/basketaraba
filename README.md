@@ -6,9 +6,10 @@ league. Three independent stages produce a static website that can be rebuilt
 from the raw data at any time.
 
 ```
-crawler.py   ->  data/<group>/matches/*.json     (raw scraped data)
-stats.py     ->  data/<group>/database.json      (normalized "DB" view)
-web/build.py ->  web/dist/                       (static site)
+crawler.py        ->  data/<group>/matches/*.json     (raw scraped data, requests-based)
+scraper/run.py    ->  data/<group>/matches/*.json     (raw scraped data, Scrapy-based)
+stats.py          ->  data/<group>/database.json      (normalized "DB" view)
+web/build.py      ->  web/dist/                       (static site)
 ```
 
 Each stage reads only the output of the previous one, so you can re-run any of
@@ -17,7 +18,7 @@ them in isolation.
 ## Requirements
 
 - Python 3.11+
-- A virtual environment with `requests`, `beautifulsoup4`, `lxml` (see
+- A virtual environment with `requests`, `beautifulsoup4`, `lxml`, `scrapy` (see
   `requirements.txt`).
 
 ```
@@ -32,6 +33,25 @@ source /path/to/venv/bin/activate
 
 # 1. Scrape one group for the whole season
 python crawler.py "SENIOR MASCULINA 3ª-GRUPO A"
+
+# 1b. Force the legacy requests engine through the same CLI
+python crawler.py "SENIOR MASCULINA 3ª-GRUPO A" --engine requests
+
+# 1c. Force the Scrapy engine through the same CLI
+python crawler.py "SENIOR MASCULINA 3ª-GRUPO A" --engine scrapy
+
+# 1d. Override the default engine through the environment if needed
+BASKETARABA_DEFAULT_ENGINE=requests python crawler.py "SENIOR MASCULINA 3ª-GRUPO A"
+
+# 1e. Run both engines and print a compact comparison
+python crawler.py "SENIOR MASCULINA 3ª-GRUPO A" --compare-engines
+
+# 1f. Persist metrics from one run or from a comparison
+python crawler.py "SENIOR MASCULINA 3ª-GRUPO A" --metrics-out /tmp/requests_metrics.json
+python crawler.py "SENIOR MASCULINA 3ª-GRUPO A" --compare-engines --metrics-out /tmp/compare_metrics.json
+
+# Alternative: run the embedded Scrapy spider
+python -m scraper.run "SENIOR MASCULINA 3ª-GRUPO A"
 
 # 2. Build the normalized database
 python stats.py data/senior-masculina-3a-grupo-a
@@ -50,7 +70,8 @@ Downloads the season schedule, every match's player stats, and the full
 play-by-play log for the group passed as argument.
 
 ```
-python crawler.py "SENIOR MASCULINA 3ª-GRUPO A" [--out data] [--sleep 0.4] [--force] [-v]
+python crawler.py "SENIOR MASCULINA 3ª-GRUPO A" [--out data] [--engine requests|scrapy] [--metrics-out path.json] [--sleep 0.4] [--force] [-v]
+python crawler.py "SENIOR MASCULINA 3ª-GRUPO A" [--compare-engines] [--out data] [--metrics-out path.json] [--sleep 0.4] [--force] [-v]
 ```
 
 How it works:
@@ -67,6 +88,48 @@ How it works:
 
 All HTML responses are cached on disk under `raw/`, so re-runs are nearly
 instant. Pass `--force` to refresh.
+
+By default, `crawler.py` now delegates to the embedded Scrapy runner while
+preserving the same output layout.
+
+If needed, the legacy path is still available with `--engine requests` or by
+setting `BASKETARABA_DEFAULT_ENGINE=requests`. The script remains the primary
+entrypoint; only the backend engine changes when the flag is omitted.
+
+For side-by-side checks, `--compare-engines` runs `requests` and `scrapy`
+sequentially and prints a compact summary with comparable metrics, including
+per-phase deltas.
+
+If `--metrics-out` is provided, `crawler.py` writes metrics to JSON. In compare
+mode the file contains `requests`, `scrapy`, and `deltas`; in single-engine
+mode it contains that run's metrics only.
+
+The Scrapy path can also be stress-tested through the same entrypoint with a
+real network refresh, for example:
+
+```bash
+python crawler.py "SENIOR MASCULINA 3ª-GRUPO A" --force --metrics-out /tmp/force_scrapy_metrics.json
+```
+
+## 1b. Scrapy crawler (`scraper/`)
+
+The repository also includes an embedded Scrapy project that targets the same
+site and writes the same output layout as `crawler.py`.
+
+```
+python -m scraper.run "SENIOR MASCULINA 3ª-GRUPO A" [--out data] [--metrics-out path.json] [--force]
+scrapy crawl basketaraba -a group="SENIOR MASCULINA 3ª-GRUPO A" -a out=data -a force=false
+```
+
+Notes:
+
+- The spider reuses the existing parsing logic from `crawler.py` to preserve
+  the JSON contract consumed by `stats.py` and `web/build.py`.
+- Raw HTML is still cached under `data/<group>/raw/`; if the cache exists and
+  `--force` is not passed, the spider reuses cached HTML instead of hitting the
+  network again.
+- `crawler.py` remains the simplest entrypoint; the Scrapy path is intended for
+  incremental migration and better crawling controls.
 
 ### Output layout
 
