@@ -334,7 +334,7 @@ def crawl(group_name: str, out_root: Path, sleep: float, force: bool) -> dict:
     for i, pid in enumerate(sorted(seen_ids), 1):
         raw_path = raw_dir / f"partido_{pid}.html"
         json_path = matches_dir / f"{pid}.json"
-        if json_path.exists() and raw_path.exists() and not force:
+        if json_path.exists() and not force:
             cached_match_reads += 1
             log.info("[%d/%d] %s (cached)", i, len(seen_ids), pid)
             continue
