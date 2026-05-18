@@ -24,11 +24,8 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      - name: Scrape
-        run: python crawler.py "SENIOR MASCULINA 3ª-GRUPO A"
-
-      - name: Build database
-        run: python stats.py data/senior-masculina-3a-grupo-a
+      - name: Scrape all groups
+        run: python scripts/run_all_groups.py --no-serve --skip-build
 
       - name: Commit data
         run: |
