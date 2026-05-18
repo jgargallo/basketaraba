@@ -61,13 +61,23 @@ class BasketarabaSpider(scrapy.Spider):
         crawler.signals.connect(spider._on_spider_closed, signal=signals.spider_closed)
         return spider
 
-    def __init__(self, group: str, out: str = "data", force: str | bool = False, *args, **kwargs):
+    def __init__(
+        self,
+        group: str,
+        out: str = "data",
+        force: str | bool = False,
+        category_id: str | None = None,
+        heading: str | None = None,
+        *args,
+        **kwargs,
+    ):
         super().__init__(*args, **kwargs)
         self.started_at = time.monotonic()
         self.group_name = group
         self.out_root = Path(out)
         self.force = str(force).lower() in {"1", "true", "yes", "on"}
-        self.target_group = _norm(group)
+        self.target_group = _norm(heading) if heading else _norm(group)
+        self._preset_category_id: str | None = category_id
         self.group_ref: GroupRef | None = None
         self.out_dir: Path | None = None
         self.raw_dir: Path | None = None
@@ -89,7 +99,11 @@ class BasketarabaSpider(scrapy.Spider):
         self.index_finalized_at: float | None = None
 
     def start_requests(self):
-        yield scrapy.Request(f"{BASE}/jornada", callback=self.parse_group_page)
+        if self._preset_category_id:
+            monday = date.today() - timedelta(days=date.today().weekday())
+            yield self._group_week_request(self._preset_category_id, monday, 0)
+        else:
+            yield scrapy.Request(f"{BASE}/jornada", callback=self.parse_group_page)
 
     def parse_group_page(self, response: TextResponse):
         category_name = self._category_name()
@@ -115,10 +129,13 @@ class BasketarabaSpider(scrapy.Spider):
     def parse_group_week(self, response: TextResponse, *, category_id: str, monday: date, offset: int):
         group_id = _extract_group_id(response.text, self.target_group)
         if group_id:
+            # Use the canonical group name (not the raw heading) for output paths.
+            canonical = _norm(self.group_name)
+            category_name = canonical.split("-GRUPO", 1)[0].strip() if "-GRUPO" in canonical else canonical
             self.group_ref = GroupRef(
-                category_name=self._category_name(),
+                category_name=category_name,
                 category_id=category_id,
-                group_name=self.target_group,
+                group_name=canonical,
                 group_id=group_id,
             )
             self.out_dir = self.out_root / _slugify(self.group_ref.group_name)

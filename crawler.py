@@ -102,38 +102,53 @@ class Client:
 # ---------------------------------------------------------------------------
 
 
-def resolve_group(client: Client, group_name: str) -> GroupRef:
-    """Resolve a group like 'SENIOR MASCULINA 3ª-GRUPO A' to its IDs."""
+def resolve_group(
+    client: Client,
+    group_name: str,
+    *,
+    category_id: str | None = None,
+    group_id: str | None = None,
+    heading: str | None = None,
+) -> GroupRef:
+    """Resolve a group like 'SENIOR MASCULINA 3ª-GRUPO A' to its IDs.
+
+    category_id and heading can be supplied by discover_groups() to skip the
+    expensive category-option lookup and the h3-matching scan respectively.
+    The heading is the raw normalised h3 text from the jornada HTML; it may
+    differ from group_name when the site uses abbreviations.
+    """
     target = _norm(group_name)
+    heading_norm = _norm(heading) if heading else target
 
-    # Find category — the part before "-GRUPO" (or full name if no group split).
-    if "-GRUPO" in target:
-        category_name = target.split("-GRUPO", 1)[0].strip()
+    if category_id is None:
+        # Find category — the part before "-GRUPO" (or full name if no split).
+        if "-GRUPO" in target:
+            category_name = target.split("-GRUPO", 1)[0].strip()
+        else:
+            category_name = target
+
+        html = client.get(f"{BASE}/jornada")
+        soup = BeautifulSoup(html, "lxml")
+
+        categoria_select = soup.select_one("#categoria")
+        if not categoria_select:
+            raise RuntimeError("Could not find categoria <select> on jornada page")
+
+        for opt in categoria_select.select("option"):
+            if not opt.get("value"):
+                continue
+            if _norm(opt.get_text()) == category_name:
+                category_id = opt["value"]
+                break
+        if not category_id:
+            opts = [o.get_text(strip=True) for o in categoria_select.select("option") if o.get("value")]
+            raise RuntimeError(f"Category {category_name!r} not found. Available: {opts}")
     else:
-        category_name = target
-
-    html = client.get(f"{BASE}/jornada")
-    soup = BeautifulSoup(html, "lxml")
-
-    categoria_select = soup.select_one("#categoria")
-    if not categoria_select:
-        raise RuntimeError("Could not find categoria <select> on jornada page")
-
-    category_id = None
-    for opt in categoria_select.select("option"):
-        if not opt.get("value"):
-            continue
-        if _norm(opt.get_text()) == category_name:
-            category_id = opt["value"]
-            break
-    if not category_id:
-        opts = [o.get_text(strip=True) for o in categoria_select.select("option") if o.get("value")]
-        raise RuntimeError(f"Category {category_name!r} not found. Available: {opts}")
+        category_name = _norm(group_name).split("-GRUPO", 1)[0].strip() if "-GRUPO" in target else target
 
     # Walk weeks to find the group_id from the dameJornada response.
-    # We try recent weeks until we see the group header; basketaraba returns
-    # all groups of the category for a given week.
-    group_id = _find_group_id(client, category_id, target)
+    if not group_id:
+        group_id = _find_group_id(client, category_id, heading_norm)
     return GroupRef(category_name=category_name, category_id=category_id,
                     group_name=target, group_id=group_id)
 
@@ -152,6 +167,59 @@ def _find_group_id(client: Client, category_id: str, group_name_norm: str) -> st
         if gid:
             return gid
     raise RuntimeError(f"Could not find group {group_name_norm!r} in any recent jornada")
+
+
+def discover_groups(client: Client, *, weeks: int = 2) -> list[dict]:
+    """Return all groups available on the site.
+
+    Scans `weeks` past weeks per category (default: 2 = current + previous).
+    Pass weeks=30 to cover the full season.
+
+    Each entry is a dict with:
+      name        - canonical slug-friendly name (category option text + suffix)
+      heading     - raw normalised h3 text as it appears in the jornada HTML
+      category_id - category option value from the #categoria <select>
+    """
+    html = client.get(f"{BASE}/jornada")
+    soup = BeautifulSoup(html, "lxml")
+    today = date.today()
+    monday = today - timedelta(days=today.weekday())
+    groups: list[dict] = []
+    seen: set[str] = set()
+    for opt in soup.select("#categoria option"):
+        if not opt.get("value"):
+            continue
+        cat_id = opt["value"]
+        category_text = opt.get_text(strip=True)
+        for offset in range(0, weeks):
+            week = monday - timedelta(weeks=offset)
+            week_html = client.get(
+                f"{BASE}/ajax/dameJornada.php?live=1&week={week.isoformat()}&categoria={cat_id}"
+            )
+            for heading, _ in _parse_week_jornada(week_html):
+                # Discard groups without a verCalendario button — they are
+                # elimination rounds (F4, CRUCES, FINAL COPA) with no season
+                # calendar and cannot be scraped.
+                if _extract_group_id(week_html, heading) is None:
+                    continue
+                if heading == "PRUEBA":
+                    continue
+                # Reconstruct a canonical name from the dropdown option text so
+                # it works as a stable directory slug even when the site uses
+                # abbreviations in the h3 (e.g. "SEN.MAS.1A-GRUPO UNICO").
+                if "-GRUPO" in heading:
+                    suffix = heading.split("-GRUPO", 1)[1].strip()
+                    canonical = f"{category_text}-GRUPO {suffix}"
+                else:
+                    canonical = heading  # keep full heading for F4 / Play-In etc.
+                if canonical not in seen:
+                    groups.append({
+                        "name": canonical,
+                        "heading": heading,
+                        "category_id": cat_id,
+                    })
+                    seen.add(canonical)
+    return groups
 
 
 def fetch_calendar(client: Client, group: GroupRef) -> tuple[str, SeasonCalendar]:
@@ -178,10 +246,48 @@ def fetch_match(client: Client, partido_id: str) -> tuple[str, MatchDetail]:
 
 
 # ---------------------------------------------------------------------------
+# Pending-date resolution
+# ---------------------------------------------------------------------------
+
+_PENDING_FILE = "pending_dates.json"
+_PENDING_SCAN_RADIUS = 4  # scan ±N weeks around each pending match's scheduled monday
+
+
+def _load_pending(out_dir: Path) -> list[dict]:
+    path = out_dir / _PENDING_FILE
+    if not path.exists():
+        return []
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        return []
+
+
+def _save_pending(out_dir: Path, index_matches: list[dict]) -> None:
+    pending = [
+        {k: m[k] for k in ("home_team_id", "away_team_id", "jornada", "monday")}
+        for m in index_matches
+        if not m.get("starts_at") and m.get("home_team_id") and m.get("away_team_id")
+    ]
+    _write_json(out_dir / _PENDING_FILE, pending)
+    if pending:
+        log.info("Pending dates: %d match(es) saved for next run", len(pending))
+
+
+# ---------------------------------------------------------------------------
 # Orchestration
 # ---------------------------------------------------------------------------
 
-def crawl(group_name: str, out_root: Path, sleep: float, force: bool) -> dict:
+def crawl(
+    group_name: str,
+    out_root: Path,
+    sleep: float,
+    force: bool,
+    *,
+    category_id: str | None = None,
+    group_id: str | None = None,
+    heading: str | None = None,
+) -> dict:
     started_at = time.monotonic()
     client = Client(sleep=sleep)
     cached_calendar_reads = 0
@@ -190,7 +296,7 @@ def crawl(group_name: str, out_root: Path, sleep: float, force: bool) -> dict:
     failed_match_fetches = 0
 
     log.info("Resolving group: %s", group_name)
-    group = resolve_group(client, group_name)
+    group = resolve_group(client, group_name, category_id=category_id, group_id=group_id, heading=heading)
     log.info("→ category_id=%s group_id=%s", group.category_id, group.group_id)
     resolved_at = time.monotonic()
 
@@ -238,6 +344,55 @@ def crawl(group_name: str, out_root: Path, sleep: float, force: bool) -> dict:
     raw_entries: list[dict] = []
     seen_ids: set[str] = set()
     target_group = _norm(group.group_name)
+
+    # Attempt to resolve pending dates from the previous run before the normal scan.
+    pending = _load_pending(out_dir)
+    if pending:
+        log.info("Resolving %d pending match date(s) from previous run …", len(pending))
+        pending_pairs = {(p["home_team_id"], p["away_team_id"]) for p in pending}
+        weeks_to_scan: set[date] = set()
+        for p in pending:
+            if p.get("monday"):
+                base = date.fromisoformat(p["monday"])
+                for offset in range(-_PENDING_SCAN_RADIUS, _PENDING_SCAN_RADIUS + 1):
+                    weeks_to_scan.add(base + timedelta(weeks=offset))
+        for week in sorted(weeks_to_scan):
+            if not pending_pairs:
+                break
+            raw_path = raw_dir / f"jornada_{week.isoformat()}.html"
+            try:
+                # Always fetch fresh (bypass cache) so we catch newly published actas.
+                html, _ = fetch_week_jornada(client, group.category_id, week)
+                _write_raw(raw_path, html)
+            except Exception as exc:
+                log.warning("Pending scan: week %s: %s", week, exc)
+                continue
+            for g, entry in _parse_week_jornada(html):
+                if g != target_group or not entry.starts_at:
+                    continue
+                home_id = _resolve(entry.home_team, entry.home_logo)
+                away_id = _resolve(entry.away_team, entry.away_logo)
+                key = (home_id, away_id)
+                if key not in pending_pairs:
+                    continue
+                jornada_num = next(
+                    (p["jornada"] for p in pending
+                     if p["home_team_id"] == home_id and p["away_team_id"] == away_id),
+                    0,
+                )
+                log.info("  Resolved: %s vs %s → %s", entry.home_team, entry.away_team, entry.starts_at)
+                raw_entries.append({
+                    "jornada": jornada_num,
+                    "monday": week.isoformat(),
+                    "home_team_id": home_id,
+                    "away_team_id": away_id,
+                    "source": "jornada",
+                    **_to_dict(entry),
+                })
+                if entry.partido_id:
+                    seen_ids.add(entry.partido_id)
+                pending_pairs.discard(key)
+
     for jornada, monday in sorted(mondays_by_jornada.items()):
         raw_path = raw_dir / f"jornada_{monday.isoformat()}.html"
         if raw_path.exists() and not force:
@@ -321,6 +476,7 @@ def crawl(group_name: str, out_root: Path, sleep: float, force: bool) -> dict:
         "group": _to_dict(group),
         "matches": jornada_entries,
     })
+    _save_pending(out_dir, jornada_entries)
 
     # Group metadata
     _write_json(out_dir / "group.json", {
@@ -344,6 +500,9 @@ def crawl(group_name: str, out_root: Path, sleep: float, force: bool) -> dict:
         except Exception as exc:
             failed_match_fetches += 1
             log.exception("Failed to fetch partido %s: %s", pid, exc)
+            continue
+        if detail.status not in ("FINALIZADO", "SUSPENDIDO"):
+            log.warning("Skipping in-progress match %s (status=%s)", pid, detail.status)
             continue
         _write_raw(raw_path, html)
         _write_json(json_path, detail)
@@ -484,7 +643,9 @@ def compare_engines(group_name: str, out_root: Path, sleep: float, force: bool, 
 
 def main(argv: Iterable[str] | None = None) -> int:
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    p.add_argument("group", help="Group name, e.g. 'SENIOR MASCULINA 3ª-GRUPO A'")
+    p.add_argument("group", nargs="?", help="Group name, e.g. 'SENIOR MASCULINA 3ª-GRUPO A'")
+    p.add_argument("--list-groups", action="store_true", help="Print available group names as JSON and exit")
+    p.add_argument("--full-season", action="store_true", help="When listing groups, scan all 30 past weeks instead of just the current and previous")
     p.add_argument("--out", type=Path, default=Path("data"), help="Output root directory (default: ./data)")
     p.add_argument("--engine", choices=("requests", "scrapy"), default=_default_engine(),
                    help="Crawler engine to use (default: BASKETARABA_DEFAULT_ENGINE or scrapy)")
@@ -495,6 +656,9 @@ def main(argv: Iterable[str] | None = None) -> int:
                    help="Write timestamped metrics snapshots under the given root directory")
     p.add_argument("--sleep", type=float, default=0.4, help="Seconds between HTTP requests (default: 0.4)")
     p.add_argument("--force", action="store_true", help="Re-download even if cached files exist")
+    p.add_argument("--category-id", default=None, help="Pre-resolved category ID (skips jornada page)")
+    p.add_argument("--group-id", default=None, help="Pre-resolved group ID (skips dameJornada scan; requires --category-id)")
+    p.add_argument("--heading", default=None, help="Raw h3 heading text for group matching")
     p.add_argument("-v", "--verbose", action="store_true")
     args = p.parse_args(list(argv) if argv is not None else None)
 
@@ -503,6 +667,15 @@ def main(argv: Iterable[str] | None = None) -> int:
         format="%(asctime)s %(levelname)s %(message)s",
         datefmt="%H:%M:%S",
     )
+
+    if args.list_groups:
+        client = Client(sleep=args.sleep)
+        groups = discover_groups(client, weeks=30 if args.full_season else 2)
+        print(json.dumps(groups, ensure_ascii=False))
+        sys.exit(0)
+
+    if args.group is None:
+        p.error("group is required unless --list-groups is specified")
 
     log.info("Selected crawler engine: %s", args.engine)
 
@@ -526,9 +699,14 @@ def main(argv: Iterable[str] | None = None) -> int:
             delegated_argv.extend(["--metrics-out", str(args.metrics_out)])
         if args.metrics_history_dir is not None:
             delegated_argv.extend(["--metrics-history-dir", str(args.metrics_history_dir)])
+        if args.category_id is not None:
+            delegated_argv.extend(["--category-id", args.category_id])
+        if args.heading is not None:
+            delegated_argv.extend(["--heading", args.heading])
         return scrapy_main(delegated_argv)
 
-    metrics = crawl(args.group, args.out, args.sleep, args.force)
+    metrics = crawl(args.group, args.out, args.sleep, args.force,
+                    category_id=args.category_id, group_id=args.group_id, heading=args.heading)
     if args.metrics_out is not None:
         _write_metrics_file(args.metrics_out, metrics)
     if args.metrics_history_dir is not None:
