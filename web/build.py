@@ -1,19 +1,25 @@
 #!/usr/bin/env python3
 """
-Build the static stats website from database.json.
+Build the static stats website from one or more database.json files.
 
 Layout produced under --out (default web/dist):
     index.html          single-page app shell
     styles.css
     app.js
     data/
-        league.json
-        teams/<team_id>.json
-        players/<player_id>.json
-        games/<game_id>.json
+        index.json                          group directory
+        <group_slug>/
+            league.json
+            teams/<team_id>.json
+            players/<player_id>.json
+            games/<game_id>.json
+    assets/
+        logos/<group_slug>/                 team logos
 
 Usage:
     python web/build.py data/senior-masculina-3a-grupo-a/database.json
+    python web/build.py data/a/database.json data/b/database.json
+    python web/build.py --all
 """
 from __future__ import annotations
 
@@ -22,9 +28,11 @@ import json
 import shutil
 import sys
 from collections import defaultdict
+from datetime import datetime, timezone
 from pathlib import Path
 import re
 import unicodedata
+from urllib.error import URLError
 from urllib.parse import quote
 from urllib.request import urlopen, Request
 
@@ -74,7 +82,11 @@ def _materialize_local_logos(db: dict, out_dir: Path) -> None:
             continue
 
         destination = logos_dir / logo_filename
-        _download_logo(remote_url, destination)
+        try:
+            _download_logo(remote_url, destination)
+        except URLError:
+            team["logo_url"] = None
+            continue
         team["logo_url"] = "/".join(["assets", "logos", _slugify(group_name), quote(logo_filename)])
 
 
@@ -141,6 +153,15 @@ def build_league(db: dict) -> dict:
     top_ft = sorted(top_ft, key=lambda r: -(r["ft_pct"] or 0))[:15]
     top_volume_scorers = sorted(eligible, key=lambda r: -r["totals"]["pts"])[:15]
     most_disciplined = sorted(eligible, key=lambda r: r["averages"]["fp"])[:15]
+    most_fp_personal = sorted(eligible, key=lambda r: -r["averages"].get("fp_personal", 0))[:15]
+    most_fp_technical = sorted(
+        [r for r in db["player_season_stats"] if r["totals"].get("fp_technical", 0) > 0],
+        key=lambda r: -r["totals"]["fp_technical"],
+    )[:15]
+    most_fp_anti = sorted(
+        [r for r in db["player_season_stats"] if r["totals"].get("fp_anti", 0) > 0],
+        key=lambda r: -r["totals"]["fp_anti"],
+    )[:15]
 
     leaders = {
         "ppg": [player_card(r, "PPG", r["averages"]["pts"], {"secondary": [
@@ -162,6 +183,15 @@ def build_league(db: dict) -> dict:
         "low_fp": [player_card(r, "FP/GP", r["averages"]["fp"], {"secondary": [
             ("Faltas total", r["totals"]["fp"]), ("GP", r["games_played"])
         ]}) for r in most_disciplined],
+        "fp_personal_pg": [player_card(r, "FP/GP", r["averages"]["fp_personal"], {"secondary": [
+            ("FP total", r["totals"]["fp_personal"]), ("GP", r["games_played"])
+        ]}) for r in most_fp_personal],
+        "fp_technical": [player_card(r, "Téc.", r["totals"]["fp_technical"], {"secondary": [
+            ("GP", r["games_played"])
+        ]}) for r in most_fp_technical],
+        "fp_anti": [player_card(r, "Anti.", r["totals"]["fp_anti"], {"secondary": [
+            ("GP", r["games_played"])
+        ]}) for r in most_fp_anti],
     }
 
     # Schedule: lightweight game list (no log)
@@ -445,72 +475,121 @@ def build_game_views(db: dict) -> dict[str, dict]:
 # Build
 # ---------------------------------------------------------------------------
 
-def build(db_path: Path, out_dir: Path, src_dir: Path) -> None:
-    db = json.loads(db_path.read_text(encoding="utf-8"))
-
-    if out_dir.exists():
-        shutil.rmtree(out_dir)
-    out_dir.mkdir(parents=True)
-    (out_dir / "data").mkdir()
-    (out_dir / "data" / "teams").mkdir()
-    (out_dir / "data" / "players").mkdir()
-    (out_dir / "data" / "games").mkdir()
+def _build_group(db: dict, out_dir: Path) -> dict:
+    """Build one group's static subtree. Returns metadata for index.json."""
+    group_slug = _slugify(db["group"]["group_name"])
+    group_dir = out_dir / "data" / group_slug
+    group_dir.mkdir(parents=True, exist_ok=True)
+    (group_dir / "teams").mkdir(exist_ok=True)
+    (group_dir / "players").mkdir(exist_ok=True)
+    (group_dir / "games").mkdir(exist_ok=True)
 
     _materialize_local_logos(db, out_dir)
 
     league = build_league(db)
-    (out_dir / "data" / "league.json").write_text(
+    (group_dir / "league.json").write_text(
         json.dumps(league, ensure_ascii=False), encoding="utf-8"
     )
 
     team_views = build_team_views(db)
     for tid, view in team_views.items():
-        (out_dir / "data" / "teams" / f"{tid}.json").write_text(
+        (group_dir / "teams" / f"{tid}.json").write_text(
             json.dumps(view, ensure_ascii=False), encoding="utf-8"
         )
 
     player_views = build_player_views(db)
     for pid, view in player_views.items():
-        (out_dir / "data" / "players" / f"{pid}.json").write_text(
+        (group_dir / "players" / f"{pid}.json").write_text(
             json.dumps(view, ensure_ascii=False), encoding="utf-8"
         )
 
     game_views = build_game_views(db)
     for gid, view in game_views.items():
-        (out_dir / "data" / "games" / f"{gid}.json").write_text(
+        (group_dir / "games" / f"{gid}.json").write_text(
             json.dumps(view, ensure_ascii=False), encoding="utf-8"
         )
 
-    # Copy static frontend
+    completed = sum(1 for g in db["games"] if g["status"] == "FINALIZADO")
+    return {
+        "id": group_slug,
+        "name": db["group"]["group_name"],
+        "built_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "stats": {
+            "teams": len(db["teams"]),
+            "players": len(db["players"]),
+            "games": len(db["games"]),
+            "completed_games": completed,
+        },
+    }
+
+
+def _build_index(groups_meta: list[dict], out_dir: Path) -> None:
+    (out_dir / "data" / "index.json").write_text(
+        json.dumps({"groups": groups_meta}, ensure_ascii=False, indent=2),
+        encoding="utf-8",
+    )
+
+
+def _copy_static_files(src_dir: Path, out_dir: Path) -> None:
     for fname in ("index.html", "styles.css", "app.js"):
         src = src_dir / fname
         if not src.exists():
             raise FileNotFoundError(f"Missing frontend source: {src}")
         shutil.copy2(src, out_dir / fname)
 
-    print(
-        f"Built site in {out_dir}\n"
-        f"  league: 1\n"
-        f"  teams: {len(team_views)}\n"
-        f"  players: {len(player_views)}\n"
-        f"  games: {len(game_views)}"
-    )
-
 
 def main() -> int:
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    p.add_argument("database", type=Path, help="Path to database.json produced by stats.py")
+    p.add_argument("databases", nargs="*", type=Path, metavar="database",
+                   help="Path(s) to database.json file(s) produced by stats.py")
+    p.add_argument("--all", action="store_true", dest="all_groups",
+                   help="Autodiscover all data/*/database.json files in the current directory")
     p.add_argument("--out", type=Path, default=Path("web/dist"),
                    help="Output directory (default: web/dist)")
     p.add_argument("--src", type=Path, default=Path("web/src"),
                    help="Frontend source directory (default: web/src)")
     args = p.parse_args()
 
-    if not args.database.exists():
-        print(f"database.json not found: {args.database}", file=sys.stderr)
+    if args.all_groups:
+        db_paths = sorted(Path("data").glob("*/database.json"))
+        if not db_paths:
+            print("No data/*/database.json files found.", file=sys.stderr)
+            return 1
+    else:
+        db_paths = args.databases
+
+    if not db_paths:
+        p.error("Provide at least one database.json path or use --all")
+
+    missing = [db for db in db_paths if not db.exists()]
+    if missing:
+        for m in missing:
+            print(f"Not found: {m}", file=sys.stderr)
         return 1
 
-    build(args.database, args.out, args.src)
+    # Clean output dir and create skeleton once
+    if args.out.exists():
+        shutil.rmtree(args.out)
+    args.out.mkdir(parents=True)
+    (args.out / "data").mkdir()
+
+    groups_meta = []
+    for db_path in db_paths:
+        db = json.loads(db_path.read_text(encoding="utf-8"))
+        meta = _build_group(db, args.out)
+        groups_meta.append(meta)
+        print(
+            f"  [{meta['id']}] "
+            f"teams={meta['stats']['teams']} "
+            f"players={meta['stats']['players']} "
+            f"games={meta['stats']['games']} "
+            f"completed={meta['stats']['completed_games']}"
+        )
+
+    _build_index(groups_meta, args.out)
+    _copy_static_files(args.src, args.out)
+
+    print(f"\nBuilt {len(groups_meta)} group(s) → {args.out}")
     return 0
 
 
