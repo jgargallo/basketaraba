@@ -1,6 +1,6 @@
 # basketaraba
 
-Tooling to scrape, normalize, and visualize statistics for a group of the
+Tooling to scrape, normalize, and visualize statistics for one or more groups of the
 [basketaraba.com](https://basketaraba.com/actadigital/jornada) basketball
 league. Three independent stages produce a static website that can be rebuilt
 from the raw data at any time.
@@ -9,7 +9,7 @@ from the raw data at any time.
 crawler.py        ->  data/<group>/matches/*.json     (raw scraped data, requests-based)
 scraper/run.py    ->  data/<group>/matches/*.json     (raw scraped data, Scrapy-based)
 stats.py          ->  data/<group>/database.json      (normalized "DB" view)
-web/build.py      ->  web/dist/                       (static site)
+web/build.py      ->  web/dist/                       (static site, supports N groups)
 ```
 
 Each stage reads only the output of the previous one, so you can re-run any of
@@ -26,33 +26,13 @@ pip install -r requirements.txt
 ```
 
 
-## Quick start
+## Quick start — single group
 
 ```
 source /path/to/venv/bin/activate
 
 # 1. Scrape one group for the whole season
 python crawler.py "SENIOR MASCULINA 3ª-GRUPO A"
-
-# 1b. Force the legacy requests engine through the same CLI
-python crawler.py "SENIOR MASCULINA 3ª-GRUPO A" --engine requests
-
-# 1c. Force the Scrapy engine through the same CLI
-python crawler.py "SENIOR MASCULINA 3ª-GRUPO A" --engine scrapy
-
-# 1d. Override the default engine through the environment if needed
-BASKETARABA_DEFAULT_ENGINE=requests python crawler.py "SENIOR MASCULINA 3ª-GRUPO A"
-
-# 1e. Run both engines and print a compact comparison
-python crawler.py "SENIOR MASCULINA 3ª-GRUPO A" --compare-engines
-
-# 1f. Persist metrics from one run or from a comparison
-python crawler.py "SENIOR MASCULINA 3ª-GRUPO A" --metrics-out /tmp/requests_metrics.json
-python crawler.py "SENIOR MASCULINA 3ª-GRUPO A" --compare-engines --metrics-out /tmp/compare_metrics.json
-python crawler.py "SENIOR MASCULINA 3ª-GRUPO A" --metrics-history-dir /tmp/basketaraba-metrics-history
-
-# Alternative: run the embedded Scrapy spider
-python -m scraper.run "SENIOR MASCULINA 3ª-GRUPO A"
 
 # 2. Build the normalized database
 python stats.py data/senior-masculina-3a-grupo-a
@@ -65,6 +45,21 @@ cd web/dist && python3 -m http.server 8000
 # open http://localhost:8000
 ```
 
+## Quick start — all groups
+
+```bash
+source /path/to/venv/bin/activate
+
+# Discover, scrape, normalize, and build everything in one command
+python scripts/run_all_groups.py
+
+# Skip scraping if data is already cached
+python scripts/run_all_groups.py --skip-crawl --skip-stats
+
+# Preview without starting the server
+python scripts/run_all_groups.py --skip-crawl --skip-stats --no-serve
+```
+
 ## Local GitHub Pages Preview
 
 GitHub Pages serves the already-built static contents of `web/dist/`. To
@@ -72,42 +67,24 @@ refresh the local data and preview the exact same static output locally, run:
 
 ```bash
 source /path/to/venv/bin/activate
-python crawler.py "SENIOR MASCULINA 3ª-GRUPO A"
-python stats.py data/senior-masculina-3a-grupo-a
-python web/build.py data/senior-masculina-3a-grupo-a/database.json
-cd web/dist && python3 -m http.server 8000
-```
 
-Then open `http://localhost:8000`.
-
-During `web/build.py`, team logos are also downloaded into
-`web/dist/assets/logos/<group>/`, so the generated site serves local logo
-assets instead of depending on remote Basketaraba image URLs at runtime.
-
-If you want a single shell line for the same workflow:
-
-```bash
-source /path/to/venv/bin/activate && python crawler.py "SENIOR MASCULINA 3ª-GRUPO A" && python stats.py data/senior-masculina-3a-grupo-a && python web/build.py data/senior-masculina-3a-grupo-a/database.json && cd web/dist && python3 -m http.server 8000
-```
-
-There is also a helper script for the same workflow:
-
-```bash
-source /path/to/venv/bin/activate
+# Single-group helper (quick dev loop)
 python scripts/run_local_preview.py
-```
-
-Useful variants:
-
-```bash
-python scripts/run_local_preview.py --force
-python scripts/run_local_preview.py --engine requests
-python scripts/run_local_preview.py --no-serve
+python scripts/run_local_preview.py --skip-crawl --skip-stats   # rebuild only
+python scripts/run_local_preview.py --force                      # refresh cache
 python scripts/run_local_preview.py --port 9000
+
+# Multi-group helper
+python scripts/run_all_groups.py
+python scripts/run_all_groups.py --skip-crawl --skip-stats
 ```
 
 If the requested preview port is already in use, the script automatically
 chooses the next free port and prints the final local URL.
+
+During `web/build.py`, team logos are downloaded into
+`web/dist/assets/logos/<group>/`, so the generated site serves local logo
+assets instead of depending on remote Basketaraba image URLs at runtime.
 
 ## 1. Crawler (`crawler.py`)
 
@@ -117,26 +94,42 @@ play-by-play log for the group passed as argument.
 ```
 python crawler.py "SENIOR MASCULINA 3ª-GRUPO A" [--out data] [--engine requests|scrapy] [--metrics-out path.json] [--metrics-history-dir dir] [--sleep 0.4] [--force] [-v]
 python crawler.py "SENIOR MASCULINA 3ª-GRUPO A" [--compare-engines] [--out data] [--metrics-out path.json] [--metrics-history-dir dir] [--sleep 0.4] [--force] [-v]
+
+# Pre-supply IDs to bypass the group-discovery scan (required for finished seasons)
+python crawler.py "SENIOR MASCULINA 2A-GRUPO B" --engine requests \
+  --category-id 68403787734a8 --group-id 6888a8711b5b9
+
+# Discover all available groups from the site
+python crawler.py --list-groups
 ```
 
 How it works:
 
 1. Resolves the group name to a `category_id` by reading the dropdown on the
    jornada page, then walks recent weekly jornadas until it finds the
-   `group_id`.
+   `group_id`. Supply `--category-id` + `--group-id` to bypass both lookups
+   (required for groups from finished seasons whose pages no longer appear in
+   recent jornadas).
 2. Fetches `calendario/<group_id>` to enumerate every jornada date and
    matchup, and to build a team roster.
 3. For each jornada's Monday, fetches `ajax/dameJornada.php?week=...&categoria=...`
    and parses the section under the group's header to collect `partido` IDs.
 4. For each partido, fetches `ajax/damePartido.php?partido=...` and parses
    scoreboard, per-quarter scores, both box scores, and the play-by-play log.
+   **Matches whose status is not `FINALIZADO` or `SUSPENDIDO` at fetch time are
+   discarded** — their JSON is not written to disk so in-progress scores are
+   never committed.
 
 HTML responses are cached on disk under `raw/` (not committed to git), so
 re-runs are nearly instant locally. Pass `--force` to refresh. In CI the
 cache is skipped — the crawler re-downloads only matches that don't already
 have a `matches/<id>.json` (committed to git).
 
-By default, `crawler.py` now delegates to the embedded Scrapy runner while
+`--list-groups` scrapes the `#categoria` dropdown and walks up to 30 past
+weeks per category (to handle off-season runs) and returns a JSON list of all
+discovered group names.
+
+By default, `crawler.py` delegates to the embedded Scrapy runner while
 preserving the same output layout.
 
 If needed, the legacy path is still available with `--engine requests` or by
@@ -154,13 +147,6 @@ mode it contains that run's metrics only.
 If `--metrics-history-dir` is provided, `crawler.py` also writes timestamped
 snapshots under `<dir>/<group>/<YYYY-MM-DD>/`, using `*_requests.json`,
 `*_scrapy.json`, or `*_compare.json` depending on the execution mode.
-
-The Scrapy path can also be stress-tested through the same entrypoint with a
-real network refresh, for example:
-
-```bash
-python crawler.py "SENIOR MASCULINA 3ª-GRUPO A" --force --metrics-out /tmp/force_scrapy_metrics.json
-```
 
 ## 1b. Scrapy crawler (`scraper/`)
 
@@ -251,26 +237,55 @@ python stats.py data/<group-slug> [--out path/to/database.json]
 - **Per-quarter breakdown is derived from the log** and cross-checked against
   box-score totals (PTS sums match for every played row on the verified data).
 - **Overtime is supported.** Periods like `E1` flow through generically.
+- **Calendar-only games (no acta).** Some matches appear in the calendar with
+  a final score but without a published `partido_id` acta. These produce a
+  `games[]` row with `id: null` and `has_box_score: false`. `starts_at` values
+  in `dd/mm/yyyy` format (no time) are supported in addition to
+  `dd/mm/yyyy HH:MM`.  The frontend renders these result cards in a muted grey
+  style and disables click-through navigation.
 
 ## 3. Web build (`web/build.py`)
 
-Reads `database.json` and writes a fully static site under `web/dist/`.
+Reads one or more `database.json` files and writes a fully static multi-group
+site under `web/dist/`.
 
 ```
+# Single group
 python web/build.py data/<group-slug>/database.json [--out web/dist] [--src web/src]
+
+# Multiple groups
+python web/build.py data/group-a/database.json data/group-b/database.json
+
+# Autodiscover all data/*/database.json
+python web/build.py --all
 ```
 
-The build script splits the database into purpose-built JSONs so each page
-loads only what it needs:
+Each group's JSON is written under its own subdirectory to avoid collisions:
 
 | File | Approx size | Used by |
 |---|---|---|
-| `data/league.json` | ~70 KB | every page (standings, leaders, group meta, full schedule) |
-| `data/teams/<id>.json` | ~25 KB | team page (roster with season stats, highlights, games, per-quarter) |
-| `data/players/<id>.json` | ~12 KB | player page (game-by-game stats with per-quarter) |
-| `data/games/<id>.json` | ~55 KB | game page (box scores + classified play-by-play) |
+| `data/index.json` | ~1 KB | SPA bootstrap — lists all built groups |
+| `data/<group>/league.json` | ~70 KB | every page (standings, leaders, group meta, full schedule) |
+| `data/<group>/teams/<id>.json` | ~25 KB | team page (roster with season stats, highlights, games, per-quarter) |
+| `data/<group>/players/<id>.json` | ~12 KB | player page (game-by-game stats with per-quarter) |
+| `data/<group>/games/<id>.json` | ~55 KB | game page (box scores + classified play-by-play) |
 
 Then copies `index.html`, `styles.css`, `app.js` from `web/src/` to `web/dist/`.
+
+### `data/index.json` shape
+
+```json
+{
+  "groups": [
+    {
+      "id": "senior-masculina-3a-grupo-a",
+      "name": "SENIOR MASCULINA 3A-GRUPO A",
+      "built_at": "2026-05-18T12:00:00Z",
+      "stats": { "teams": 12, "players": 175, "games": 132, "completed_games": 131 }
+    }
+  ]
+}
+```
 
 ### Frontend
 
@@ -278,32 +293,50 @@ Single-page application in `web/src/` with no build toolchain:
 
 - Tailwind CSS via CDN (custom orange/ink palette, Inter font)
 - Chart.js via CDN
-- Hash router with routes: `#/league`, `#/teams`, `#/leaders`, `#/schedule`,
-  `#/team/:id`, `#/player/:id`, `#/game/:id`
-- Each route fetches its JSON on demand and caches it in memory
+- Hash router with group-scoped routes:
+
+| Hash | Page |
+|---|---|
+| `#/group/<slug>/league` | Landing: standings, top scorers, results |
+| `#/group/<slug>/teams` | Teams grid |
+| `#/group/<slug>/leaders` | Six leaderboards (PPG, 3pp, 2pp, FT%, total pts, fewest fouls) |
+| `#/group/<slug>/schedule` | Full season by jornada |
+| `#/group/<slug>/team/<id>` | Team detail: charts, roster, games |
+| `#/group/<slug>/player/<id>` | Player detail: charts, per-game log |
+| `#/group/<slug>/game/<id>` | Box scores + filtered play-by-play |
+
+Legacy routes (`#/league`, `#/team/:id`, etc.) redirect to the equivalent
+group-scoped route using the current group.
+
+On startup the SPA fetches `data/index.json`, sets the first group as default,
+and populates the group selector in the header. Switching groups updates the
+URL and all subsequent data fetches.
+
+Each route fetches its JSON on demand and caches it in memory (cache is keyed
+by full path, so group switching never serves stale data from another group).
 
 ### Pages
 
-- **League** (`#/league`, landing) - KPI tiles, full standings (rows link to
+- **League** (`#/group/<slug>/league`, landing) — KPI tiles, full standings (rows link to
   team page), top scorers preview, last 10 results, all-teams grid.
-- **Team** (`#/team/:id`, golden page) - hero with logo and W-L badges; KPI
+- **Team** (`#/group/<slug>/team/:id`, golden page) — hero with logo and W-L badges; KPI
   tiles (PF/p, PC/p, point diff, ranking); per-quarter bar chart (for vs
   against); season timeline line chart (with opponent tooltip); highlights
   cards (top scorer, top 3pt, top 2pt, best FT%, best single game, fewest
   fouls); sortable full roster (PJ, PTS/p, PTS, 2/p, 3/p, TL/p, TL%, F/p,
   single-game high); sortable games table.
-- **Player** (`#/player/:id`) - hero with team link; KPI tiles (GP, PPG,
+- **Player** (`#/group/<slug>/player/:id`) — hero with team link; KPI tiles (GP, PPG,
   high, FT%); bar chart of points per game (greyed = didn't play); radar
   chart of per-quarter averages; doughnut chart of scoring distribution
   (2 x t2, 3 x t3, ft_made); season totals table; sortable per-game log
   with per-quarter points.
-- **Game** (`#/game/:id`) - scoreboard with logos and per-quarter grid; two
+- **Game** (`#/group/<slug>/game/:id`) — scoreboard with logos and per-quarter grid; two
   sortable box scores; play-by-play timeline color-coded by team with
   period and event-kind filters (made 2, made 3, FT made/missed, fouls,
   timeouts), each entry showing the running score.
-- **Leaders** (`#/leaders`) - six leaderboards: PPG, 3pp, 2pp, FT% (min 20
+- **Leaders** (`#/group/<slug>/leaders`) — six leaderboards: PPG, 3pp, 2pp, FT% (min 20
   attempts), total points, fewest fouls per game.
-- **Schedule** (`#/schedule`) - full season grouped by jornada with mini
+- **Schedule** (`#/group/<slug>/schedule`) — full season grouped by jornada with mini
   result cards.
 
 ### Deployment
@@ -311,6 +344,27 @@ Single-page application in `web/src/` with no build toolchain:
 `web/dist/` is fully static; drop it on Netlify, GitHub Pages, S3, etc. The
 basketaraba CDN serves team logos directly (referenced with
 `referrerpolicy="no-referrer"`).
+
+## 4. Multi-group orchestration (`scripts/run_all_groups.py`)
+
+Runs the full pipeline for all groups discovered from the site in one command.
+
+```
+python scripts/run_all_groups.py [--force] [--engine requests|scrapy]
+                                 [--skip-crawl] [--skip-stats] [--skip-build]
+                                 [--no-serve] [--port PORT]
+```
+
+Behavior:
+
+1. Discovers groups via `crawler.py --list-groups` (scrapes the category
+   dropdown and walks back up to 30 past weeks per category).
+2. When `--skip-crawl` is set, reads group names from existing
+   `data/*/database.json` files instead (works off-season without network).
+3. Runs `crawler.py` → `stats.py` for each group sequentially. A failure in
+   one group is logged and that group is skipped; others continue.
+4. Runs `web/build.py` with all successful database paths.
+5. Prints a success/failure summary and exits 1 if any group failed.
 
 ## GitHub Actions automation
 
@@ -340,15 +394,26 @@ To run the full pipeline manually (e.g. to backfill data locally), trigger
 
 ```
 basketaraba/
-  crawler.py             stage 1: scrape
+  crawler.py             stage 1: scrape (single group or --list-groups)
   stats.py               stage 2: normalize
   web/
-    build.py             stage 3: build static site
+    build.py             stage 3: build static site (single or multi-group)
     src/
-      index.html         SPA shell
+      index.html         SPA shell (group selector in header)
       styles.css         custom styles on top of Tailwind utilities
       app.js             router + page renderers + Chart.js setup
     dist/                generated; safe to delete and rebuild (gitignored)
+      data/
+        index.json       group registry (all built groups)
+        <group-slug>/
+          league.json
+          teams/
+          players/
+          games/
+      assets/logos/<group-slug>/
+  scripts/
+    run_local_preview.py single-group dev loop (crawl → stats → build → serve)
+    run_all_groups.py    multi-group pipeline (discover → crawl → stats → build → serve)
   data/
     <group-slug>/
       group.json         committed
@@ -356,9 +421,11 @@ basketaraba/
       matches/*.json     committed — canonical per-match data
       database.json      committed — derived tables
       raw/               gitignored — local download cache only
+  scraper/               embedded Scrapy project (alternative crawler backend)
   .github/
     workflows/
       scrape.yml         daily scrape + commit pipeline
       pages.yml          static site build + GitHub Pages deploy
   requirements.txt
+  IMPLEMENTATION.md      multi-group implementation checklist
 ```
