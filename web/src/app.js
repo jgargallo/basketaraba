@@ -10,7 +10,8 @@ const LOSS = '#f43f5e';
 
 const $view = () => document.getElementById('view');
 const cache = new Map();
-let leagueData = null;     // loaded once, shared across pages
+let groups = [];
+let currentGroup = null;
 const charts = [];
 
 // ---------------- utilities ----------------
@@ -58,9 +59,34 @@ async function loadJSON(path) {
   cache.set(path, data);
   return data;
 }
+
+function groupPath(path) {
+  return `data/${currentGroup}/${path}`;
+}
+
+async function loadGroups() {
+  const data = await loadJSON('data/index.json');
+  groups = data.groups || [];
+  if (groups.length > 0 && !currentGroup) currentGroup = groups[0].id;
+}
+
+async function setGroup(slug) {
+  currentGroup = slug;
+  document.querySelectorAll('.group-select').forEach(sel => { sel.value = slug; });
+  document.querySelectorAll('.nav-link[data-nav]').forEach(a => {
+    a.setAttribute('href', `#/group/${currentGroup}/${a.dataset.nav}`);
+  });
+  const lg = await loadLeague();
+  document.getElementById('group-name').textContent = lg.group.group_name;
+  document.getElementById('group-stats').textContent =
+    `${lg.totals.teams} equipos · ${lg.totals.players} jugadores · ${lg.totals.completed}/${lg.totals.games} partidos jugados`;
+  const opts = '<option value="">Ir a equipo…</option>' +
+    lg.teams.map(t => `<option value="${t.id}">${escapeHtml(t.name)}</option>`).join('');
+  document.querySelectorAll('.quick-team-select').forEach(sel => { sel.innerHTML = opts; });
+}
+
 async function loadLeague() {
-  if (!leagueData) leagueData = await loadJSON('data/league.json');
-  return leagueData;
+  return loadJSON(groupPath('league.json'));
 }
 
 function destroyCharts() {
@@ -80,14 +106,23 @@ function setError(msg) {
 
 // ---------------- router ----------------
 const routes = [
-  { match: /^#?\/?$/, handler: () => location.hash = '#/league' },
-  { match: /^#\/league$/, handler: renderLeague },
-  { match: /^#\/teams$/, handler: renderTeams },
-  { match: /^#\/leaders$/, handler: renderLeaders },
-  { match: /^#\/schedule$/, handler: renderSchedule },
-  { match: /^#\/team\/([^/]+)$/, handler: (m) => renderTeam(m[1]) },
-  { match: /^#\/player\/([^/]+)$/, handler: (m) => renderPlayer(m[1]) },
-  { match: /^#\/game\/([^/]+)$/, handler: (m) => renderGame(m[1]) },
+  // Group-scoped routes
+  { match: /^#\/group\/([^/]+)\/(league)?$/, handler: async (m) => { await setGroup(m[1]); return renderLeague(); } },
+  { match: /^#\/group\/([^/]+)\/teams$/, handler: async (m) => { await setGroup(m[1]); return renderTeams(); } },
+  { match: /^#\/group\/([^/]+)\/leaders$/, handler: async (m) => { await setGroup(m[1]); return renderLeaders(); } },
+  { match: /^#\/group\/([^/]+)\/schedule$/, handler: async (m) => { await setGroup(m[1]); return renderSchedule(); } },
+  { match: /^#\/group\/([^/]+)\/team\/([^/]+)$/, handler: async (m) => { await setGroup(m[1]); return renderTeam(m[2]); } },
+  { match: /^#\/group\/([^/]+)\/player\/([^/]+)$/, handler: async (m) => { await setGroup(m[1]); return renderPlayer(m[2]); } },
+  { match: /^#\/group\/([^/]+)\/game\/([^/]+)$/, handler: async (m) => { await setGroup(m[1]); return renderGame(m[2]); } },
+  // Legacy routes → redirect to current group
+  { match: /^#?\/?$/, handler: () => { location.hash = `#/group/${currentGroup}/league`; } },
+  { match: /^#\/league$/, handler: () => { location.hash = `#/group/${currentGroup}/league`; } },
+  { match: /^#\/teams$/, handler: () => { location.hash = `#/group/${currentGroup}/teams`; } },
+  { match: /^#\/leaders$/, handler: () => { location.hash = `#/group/${currentGroup}/leaders`; } },
+  { match: /^#\/schedule$/, handler: () => { location.hash = `#/group/${currentGroup}/schedule`; } },
+  { match: /^#\/team\/([^/]+)$/, handler: (m) => { location.hash = `#/group/${currentGroup}/team/${m[1]}`; } },
+  { match: /^#\/player\/([^/]+)$/, handler: (m) => { location.hash = `#/group/${currentGroup}/player/${m[1]}`; } },
+  { match: /^#\/game\/([^/]+)$/, handler: (m) => { location.hash = `#/group/${currentGroup}/game/${m[1]}`; } },
 ];
 
 async function route() {
@@ -114,18 +149,42 @@ async function route() {
 function updateNavActive() {
   const hash = location.hash || '';
   document.querySelectorAll('.nav-link').forEach(a => {
-    const target = a.getAttribute('href');
-    a.classList.toggle('active', hash === target || (target === '#/teams' && hash.startsWith('#/team/')));
+    const nav = a.dataset.nav;
+    let active = false;
+    if (nav === 'league') active = /\/league/.test(hash);
+    else if (nav === 'teams') active = /\/teams$/.test(hash) || /\/team\//.test(hash);
+    else if (nav === 'leaders') active = /\/leaders$/.test(hash);
+    else if (nav === 'schedule') active = /\/schedule$/.test(hash);
+    a.classList.toggle('active', active);
   });
 }
 window.addEventListener('hashchange', route);
 
 // ---------------- shared chrome ----------------
 async function bootstrapChrome() {
+  await loadGroups();
+
+  // Update nav link hrefs to group-scoped routes.
+  document.querySelectorAll('.nav-link[data-nav]').forEach(a => {
+    a.setAttribute('href', `#/group/${currentGroup}/${a.dataset.nav}`);
+  });
+
   const lg = await loadLeague();
   document.getElementById('group-name').textContent = lg.group.group_name;
   document.getElementById('group-stats').textContent =
     `${lg.totals.teams} equipos · ${lg.totals.players} jugadores · ${lg.totals.completed}/${lg.totals.games} partidos jugados`;
+
+  // Populate group selectors.
+  const groupOpts = groups.map(g =>
+    `<option value="${g.id}"${g.id === currentGroup ? ' selected' : ''}>${escapeHtml(g.name)}</option>`
+  ).join('');
+  document.querySelectorAll('.group-select').forEach(sel => {
+    sel.innerHTML = groupOpts;
+    sel.addEventListener('change', () => {
+      if (sel.value) location.hash = `#/group/${sel.value}/league`;
+      closeMobileMenu();
+    });
+  });
 
   // Populate both team selectors (desktop inline + mobile in dropdown).
   const opts = '<option value="">Ir a equipo…</option>' +
@@ -133,7 +192,7 @@ async function bootstrapChrome() {
   document.querySelectorAll('.quick-team-select').forEach(sel => {
     sel.innerHTML = opts;
     sel.addEventListener('change', () => {
-      if (sel.value) location.hash = `#/team/${sel.value}`;
+      if (sel.value) location.hash = `#/group/${currentGroup}/team/${sel.value}`;
       sel.value = '';
       closeMobileMenu();
     });
@@ -194,7 +253,7 @@ async function renderLeague() {
   const sideCard = el('div', { class: 'card' }, [
     el('div', { class: 'flex items-center justify-between mb-2' }, [
       el('div', { class: 'section-title-sm', html: '🏀 Máximos anotadores' }),
-      el('a', { class: 'text-xs linkish', href: '#/leaders' }, 'Ver todos →'),
+      el('a', { class: 'text-xs linkish', href: `#/group/${currentGroup}/leaders` }, 'Ver todos →'),
     ]),
     renderLeaderList(lg.leaders.ppg.slice(0, 8)),
   ]);
@@ -246,7 +305,7 @@ function renderStandingsTable(standings) {
     tr.appendChild(el('td', { class: 'num' }, fmt(s.avg_for)));
     tr.appendChild(el('td', { class: 'num' }, fmt(s.avg_against)));
     tr.appendChild(el('td', { class: 'num font-medium' }, pct(s.win_pct)));
-    tr.addEventListener('click', () => location.hash = `#/team/${s.team_id}`);
+    tr.addEventListener('click', () => location.hash = `#/group/${currentGroup}/team/${s.team_id}`);
     tr.style.cursor = 'pointer';
     tb.appendChild(tr);
   });
@@ -256,7 +315,7 @@ function renderStandingsTable(standings) {
 }
 
 function renderTeamInline(item) {
-  return el('div', { class: 'flex items-center gap-2 linkish', onclick: () => location.hash = `#/team/${item.team_id}` }, [
+  return el('div', { class: 'flex items-center gap-2 linkish', onclick: () => location.hash = `#/group/${currentGroup}/team/${item.team_id}` }, [
     item.logo_url
       ? el('img', { class: 'team-logo', src: item.logo_url, width: 24, height: 24, loading: 'lazy', referrerpolicy: 'no-referrer' })
       : el('div', { class: 'w-6 h-6 rounded-full bg-ink-200' }),
@@ -273,7 +332,7 @@ function renderLeaderList(rows) {
         ? el('img', { class: 'team-logo', src: r.logo_url, width: 22, height: 22, loading: 'lazy', referrerpolicy: 'no-referrer' })
         : el('div', { class: 'w-5 h-5 rounded-full bg-ink-200' }),
       el('div', { class: 'flex-1 min-w-0' }, [
-        el('div', { class: 'text-sm font-medium truncate linkish', onclick: () => location.hash = `#/player/${r.player_id}` }, r.player_name),
+        el('div', { class: 'text-sm font-medium truncate linkish', onclick: () => location.hash = `#/group/${currentGroup}/player/${r.player_id}` }, r.player_name),
         el('div', { class: 'text-xs text-ink-500 truncate' }, r.team_name),
       ]),
       el('div', { class: 'text-right' }, [
@@ -290,7 +349,7 @@ function renderGameMiniCard(g, lg) {
   const home = lg.teams.find(t => t.id === g.home_team_id) || {};
   const away = lg.teams.find(t => t.id === g.away_team_id) || {};
   const homeWin = g.home_score > g.away_score;
-  const card = el('div', { class: 'card-tight cursor-pointer hover:shadow-md transition', onclick: () => location.hash = `#/game/${g.id}` }, [
+  const card = el('div', { class: 'card-tight transition' + (g.id ? ' cursor-pointer hover:shadow-md' : ' card-no-acta'), onclick: g.id ? () => location.hash = `#/group/${currentGroup}/game/${g.id}` : null }, [
     el('div', { class: 'text-xs text-ink-500 mb-2 flex items-center justify-between' }, [
       el('span', null, `J${g.jornada} · ${ddmmyyyy(g.date)}`),
       g.status === 'FINALIZADO'
@@ -313,7 +372,7 @@ function renderGameMiniCard(g, lg) {
 
 function renderTeamCardSmall(t, standings) {
   const st = standings.find(s => s.team_id === t.id);
-  return el('a', { href: `#/team/${t.id}`, class: 'card-tight flex flex-col items-center text-center gap-2 hover:shadow-md transition group' }, [
+  return el('a', { href: `#/group/${currentGroup}/team/${t.id}`, class: 'card-tight flex flex-col items-center text-center gap-2 hover:shadow-md transition group' }, [
     t.logo_url
       ? el('img', { class: 'team-logo', src: t.logo_url, width: 52, height: 52, loading: 'lazy', referrerpolicy: 'no-referrer' })
       : el('div', { class: 'w-[52px] h-[52px] rounded-full bg-ink-200' }),
@@ -331,7 +390,7 @@ async function renderTeams() {
   const grid = el('div', { class: 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4' });
   for (const t of lg.teams) {
     const st = lg.standings.find(s => s.team_id === t.id);
-    grid.appendChild(el('a', { href: `#/team/${t.id}`, class: 'card flex items-center gap-4 hover:shadow-md transition' }, [
+    grid.appendChild(el('a', { href: `#/group/${currentGroup}/team/${t.id}`, class: 'card flex items-center gap-4 hover:shadow-md transition' }, [
       t.logo_url
         ? el('img', { class: 'team-logo', src: t.logo_url, width: 64, height: 64, loading: 'lazy', referrerpolicy: 'no-referrer' })
         : el('div', { class: 'w-16 h-16 rounded-full bg-ink-200' }),
@@ -365,6 +424,9 @@ async function renderLeaders() {
     [`Tiro libre % (mín ${20} intentos)`, lg.leaders.ft_pct],
     ['Anotadores totales', lg.leaders.pts_total],
     ['Menos faltas / partido', lg.leaders.low_fp],
+    ['Faltas personales / partido', lg.leaders.fp_personal_pg],
+    ['Faltas técnicas (total)', lg.leaders.fp_technical],
+    ['Faltas antideportivas (total)', lg.leaders.fp_anti],
   ];
   const grid = el('div', { class: 'grid md:grid-cols-2 lg:grid-cols-3 gap-5' });
   for (const [title, rows] of sections) {
@@ -408,7 +470,7 @@ async function renderSchedule() {
 
 // ---------------- Team page (golden) ----------------
 async function renderTeam(teamId) {
-  const [lg, view] = await Promise.all([loadLeague(), loadJSON(`data/teams/${teamId}.json`)]);
+  const [lg, view] = await Promise.all([loadLeague(), loadJSON(groupPath(`teams/${teamId}.json`))]);
   if (!view) return setError('Equipo no encontrado');
   $view().innerHTML = '';
   const t = view.team, s = view.season || {};
@@ -483,7 +545,7 @@ function renderHighlights(h) {
   ].filter(([, v]) => v);
   return el('div', { class: 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3' },
     items.map(([title, v]) =>
-      el('a', { href: `#/player/${v.player_id}`, class: 'card-tight hover:shadow-md transition flex items-center justify-between gap-3' }, [
+      el('a', { href: `#/group/${currentGroup}/player/${v.player_id}`, class: 'card-tight hover:shadow-md transition flex items-center justify-between gap-3' }, [
         el('div', { class: 'min-w-0' }, [
           el('div', { class: 'text-xs uppercase tracking-wider text-ink-500' }, title),
           el('div', { class: 'font-semibold truncate' }, v.player_name),
@@ -516,7 +578,7 @@ function renderRosterTable(roster) {
 }
 
 function playerCell(r) {
-  return el('span', { class: 'linkish font-medium', onclick: () => location.hash = `#/player/${r.id}` }, r.name);
+  return el('span', { class: 'linkish font-medium', onclick: () => location.hash = `#/group/${currentGroup}/player/${r.id}` }, r.name);
 }
 
 function renderTeamGamesTable(games) {
@@ -529,12 +591,12 @@ function renderTeamGamesTable(games) {
     { k: 'res', label: '', cell: g => g.result ? el('span', { class: 'badge ' + (g.result === 'W' ? 'badge-w' : g.result === 'L' ? 'badge-l' : 'badge-d') }, g.result) : el('span', { class: 'badge badge-pending' }, g.status), sortKey: g => g.result || '' },
   ];
   return sortableTable(games, cols, { initialSort: 'jor', initialDir: 'asc',
-    onRowClick: g => g.id && (location.hash = `#/game/${g.id}`),
+    onRowClick: g => g.id && (location.hash = `#/group/${currentGroup}/game/${g.id}`),
   });
 }
 function opponentCell(g) {
   if (!g.opponent_id) return '–';
-  return el('span', { class: 'flex items-center gap-2 linkish', onclick: (e) => { e.stopPropagation(); location.hash = `#/team/${g.opponent_id}`; } }, [
+  return el('span', { class: 'flex items-center gap-2 linkish', onclick: (e) => { e.stopPropagation(); location.hash = `#/group/${currentGroup}/team/${g.opponent_id}`; } }, [
     g.opponent_logo ? el('img', { class: 'team-logo', src: g.opponent_logo, width: 22, height: 22, referrerpolicy: 'no-referrer' }) : el('div', { class: 'w-5 h-5 rounded-full bg-ink-200' }),
     el('span', null, g.opponent_name || g.opponent_id),
   ]);
@@ -546,7 +608,7 @@ function resultCell(g) {
 
 // ---------------- Player page ----------------
 async function renderPlayer(playerId) {
-  const view = await loadJSON(`data/players/${playerId}.json`);
+  const view = await loadJSON(groupPath(`players/${playerId}.json`));
   $view().innerHTML = '';
   const p = view.player, s = view.season;
   const root = el('div', { class: 'fade-in space-y-6' });
@@ -557,7 +619,7 @@ async function renderPlayer(playerId) {
     el('div', { class: 'flex-1 text-center sm:text-left' }, [
       el('div', { class: 'text-xs uppercase tracking-wider text-ink-500' }, '#' + (p.dorsals?.join(' / ') || '–')),
       el('h1', { class: 'text-3xl font-extrabold tracking-tight' }, p.name),
-      el('a', { href: `#/team/${p.team_id}`, class: 'inline-flex items-center gap-2 mt-2 text-ink-700 hover:text-brand-600' }, [
+      el('a', { href: `#/group/${currentGroup}/team/${p.team_id}`, class: 'inline-flex items-center gap-2 mt-2 text-ink-700 hover:text-brand-600' }, [
         p.team_logo ? el('img', { class: 'team-logo', src: p.team_logo, width: 22, height: 22, referrerpolicy: 'no-referrer' }) : null,
         el('span', { class: 'font-medium' }, p.team_name || p.team_id),
       ]),
@@ -638,7 +700,7 @@ function renderPlayerGameLog(rows) {
   const cols = [
     { k: 'jor', label: 'J', cell: g => g.jornada, sortKey: g => g.jornada || 0, align: 'right' },
     { k: 'date', label: 'Fecha', cell: g => g.date ? ddmmyyyy(g.date) : '–', sortKey: g => g.date || '' },
-    { k: 'opp', label: 'Rival', cell: g => g.opponent_id ? el('span', { class: 'linkish', onclick: e => { e.stopPropagation(); location.hash = `#/team/${g.opponent_id}`; } }, (g.is_home ? '' : '@ ') + (g.opponent_name || g.opponent_id)) : '–', sortKey: g => g.opponent_name || '' },
+    { k: 'opp', label: 'Rival', cell: g => g.opponent_id ? el('span', { class: 'linkish', onclick: e => { e.stopPropagation(); location.hash = `#/group/${currentGroup}/team/${g.opponent_id}`; } }, (g.is_home ? '' : '@ ') + (g.opponent_name || g.opponent_id)) : '–', sortKey: g => g.opponent_name || '' },
     { k: 'team', label: 'Equipo', cell: g => g.team_for != null ? `${g.team_for} – ${g.team_against}` : '–', sortKey: g => (g.team_for - g.team_against) || 0, align: 'right' },
     { k: 'pts', label: 'PTS', cell: g => g.played ? g.pts : '–', sortKey: g => g.played ? g.pts : -1, align: 'right', bold: true },
     { k: 't2', label: '2', cell: g => g.played ? g.t2 : '–', sortKey: g => g.played ? g.t2 : -1, align: 'right' },
@@ -651,14 +713,14 @@ function renderPlayerGameLog(rows) {
     { k: 'q4', label: 'C4', cell: g => g.played ? (g.by_quarter?.P4?.pts ?? 0) : '–', sortKey: g => g.by_quarter?.P4?.pts || 0, align: 'right' },
   ];
   return sortableTable(rows, cols, { initialSort: 'jor', initialDir: 'asc',
-    onRowClick: g => g.game_id && (location.hash = `#/game/${g.game_id}`),
+    onRowClick: g => g.game_id && (location.hash = `#/group/${currentGroup}/game/${g.game_id}`),
     rowClass: g => g.played ? '' : 'opacity-50',
   });
 }
 
 // ---------------- Game page ----------------
 async function renderGame(gameId) {
-  const view = await loadJSON(`data/games/${gameId}.json`);
+  const view = await loadJSON(groupPath(`games/${gameId}.json`));
   $view().innerHTML = '';
   const g = view.game;
   const root = el('div', { class: 'fade-in space-y-6' });
@@ -704,7 +766,7 @@ async function renderGame(gameId) {
 function teamScoreBlock(team, score, isWinner) {
   return el('div', { class: 'flex flex-col items-center gap-2 text-center' }, [
     team.logo_url ? el('img', { class: 'team-logo', src: team.logo_url, width: 72, height: 72, referrerpolicy: 'no-referrer' }) : el('div', { class: 'w-[72px] h-[72px] rounded-full bg-ink-200' }),
-    el('a', { href: `#/team/${team.team_id}`, class: 'font-semibold linkish' }, team.team_name),
+    el('a', { href: `#/group/${currentGroup}/team/${team.team_id}`, class: 'font-semibold linkish' }, team.team_name),
     el('div', { class: 'text-4xl font-extrabold tabular-nums ' + (isWinner ? 'text-brand-600' : 'text-ink-700') }, score ?? '–'),
   ]);
 }
@@ -712,7 +774,7 @@ function teamScoreBlock(team, score, isWinner) {
 function renderBoxScore(side) {
   const cols = [
     { k: 'd', label: '#', cell: r => r.dorsal || '–', sortKey: r => parseInt(r.dorsal || '999'), align: 'right' },
-    { k: 'name', label: 'Jugador', cell: r => el('span', { class: 'linkish font-medium', onclick: () => location.hash = `#/player/${r.player_id}` }, r.name), sortKey: r => r.name },
+    { k: 'name', label: 'Jugador', cell: r => el('span', { class: 'linkish font-medium', onclick: () => location.hash = `#/group/${currentGroup}/player/${r.player_id}` }, r.name), sortKey: r => r.name },
     { k: 'pts', label: 'PTS', cell: r => r.pts, sortKey: r => r.pts, align: 'right', bold: true },
     { k: 't2', label: '2', cell: r => r.t2, sortKey: r => r.t2, align: 'right' },
     { k: 't3', label: '3', cell: r => r.t3, sortKey: r => r.t3, align: 'right' },
