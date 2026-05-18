@@ -18,6 +18,9 @@ env/
 .vscode/
 *.swp
 
+# Claude Code local settings (machine-specific)
+.claude/settings.local.json
+
 # Generated data — regenerable with the pipeline:
 #   python crawler.py "<group>"
 #   python stats.py data/<group-slug>
