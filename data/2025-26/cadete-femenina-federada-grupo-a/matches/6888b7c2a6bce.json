@@ -1,0 +1,134 @@
+{
+  "partido_id": "6888b7c2a6bce",
+  "status": "FINALIZADO",
+  "starts_at": "11/10/2025 10:45",
+  "category": "CADETE 1ª FEMENINA",
+  "home": {
+    "team": "AKETEGI TOJU",
+    "color": "#0000FF",
+    "logo": "../images/logos/TOJU VITORIA-GASTEIZ.png",
+    "total_pts": 29,
+    "total_t2": 0,
+    "total_t3": 0,
+    "total_tl_made": 0,
+    "total_tl_att": 0,
+    "total_fp": 0,
+    "players": []
+  },
+  "away": {
+    "team": "URGATZI A",
+    "color": "#FF0000",
+    "logo": "../images/logos/URGATZI K K.png",
+    "total_pts": 68,
+    "total_t2": 0,
+    "total_t3": 0,
+    "total_tl_made": 0,
+    "total_tl_att": 0,
+    "total_fp": 0,
+    "players": []
+  },
+  "quarters": [
+    [
+      8,
+      20
+    ],
+    [
+      4,
+      8
+    ],
+    [
+      6,
+      16
+    ],
+    [
+      11,
+      24
+    ]
+  ],
+  "log": [
+    {
+      "period": "P4",
+      "clock": "03:16",
+      "side": "home",
+      "event": "Tiempo Muerto",
+      "event_kind": "timeout",
+      "ft_made": null,
+      "ft_index": null,
+      "ft_of": null,
+      "player_dorsal": null,
+      "player_name": null,
+      "score_home": 29,
+      "score_away": 68
+    },
+    {
+      "period": "P3",
+      "clock": "00:00",
+      "side": "neutral",
+      "event": "Fin de periodo",
+      "event_kind": "period_end",
+      "ft_made": null,
+      "ft_index": null,
+      "ft_of": null,
+      "player_dorsal": null,
+      "player_name": null,
+      "score_home": 29,
+      "score_away": 68
+    },
+    {
+      "period": "P3",
+      "clock": "04:58",
+      "side": "home",
+      "event": "Tiempo Muerto",
+      "event_kind": "timeout",
+      "ft_made": null,
+      "ft_index": null,
+      "ft_of": null,
+      "player_dorsal": null,
+      "player_name": null,
+      "score_home": 29,
+      "score_away": 68
+    },
+    {
+      "period": "P2",
+      "clock": "00:00",
+      "side": "neutral",
+      "event": "Fin de periodo",
+      "event_kind": "period_end",
+      "ft_made": null,
+      "ft_index": null,
+      "ft_of": null,
+      "player_dorsal": null,
+      "player_name": null,
+      "score_home": 29,
+      "score_away": 68
+    },
+    {
+      "period": "P1",
+      "clock": "00:00",
+      "side": "neutral",
+      "event": "Fin de periodo",
+      "event_kind": "period_end",
+      "ft_made": null,
+      "ft_index": null,
+      "ft_of": null,
+      "player_dorsal": null,
+      "player_name": null,
+      "score_home": 29,
+      "score_away": 68
+    },
+    {
+      "period": "P1",
+      "clock": "02:41",
+      "side": "home",
+      "event": "Tiempo Muerto",
+      "event_kind": "timeout",
+      "ft_made": null,
+      "ft_index": null,
+      "ft_of": null,
+      "player_dorsal": null,
+      "player_name": null,
+      "score_home": 29,
+      "score_away": 68
+    }
+  ]
+}

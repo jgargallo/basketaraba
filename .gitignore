@@ -18,17 +18,26 @@ env/
 .vscode/
 *.swp
 
+# Claude Code local settings (machine-specific)
+.claude/settings.local.json
+
 # Generated data — regenerable with the pipeline:
 #   python crawler.py "<group>"
 #   python stats.py data/<group-slug>
 #   python web/build.py data/<group-slug>/database.json
 #
-# Everything under data/ is ignored EXCEPT database.json files. Committing
-# those lets a CI job rebuild the static site without re-crawling.
+# raw/ = download cache, ephemeral — not committed.
+# matches/ = canonical scraped data, committed so CI skips already-scraped matches.
+# database.json = derived table, committed so the Pages deploy needs no scraping.
 data/*
 !data/*/
 data/*/*
+!data/*/raw/
+data/*/raw/*
+!data/*/matches/
+!data/*/matches/*.json
 !data/*/database.json
+!data/*/matches.json
 web/dist/
 
 # Logs

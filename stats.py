@@ -29,14 +29,18 @@ from __future__ import annotations
 
 import argparse
 import json
+import logging
 import re
 import unicodedata
 from collections import defaultdict
 from dataclasses import dataclass
 from datetime import datetime
+from difflib import SequenceMatcher
 from pathlib import Path
 
 from bs4 import BeautifulSoup
+
+log = logging.getLogger(__name__)
 
 
 # ---------------------------------------------------------------------------
@@ -59,15 +63,18 @@ def _name_key(name: str) -> str:
 _CANON_NAME = re.compile(r"^[A-ZÁÉÍÓÚÑ][\w'\-áéíóúñü]+,\s+[A-ZÁÉÍÓÚÑ]\.?$")
 
 
-def _best_display_name(variants: set[str]) -> str:
+def _best_display_name(variants: set[str], preferred: str | None = None) -> str:
     """Pick the nicest spelling. Prefer the canonical 'Surname, F[.]' form in
-    title case; fall back to whichever has a single comma and mixed case."""
+    title case; fall back to whichever has a single comma and mixed case.
+    `preferred` (the most-recently-seen name) is weighted heavily as the
+    second tiebreaker — the latest name in the season usually corrects prior errors."""
     def score(v: str) -> tuple:
         canonical = bool(_CANON_NAME.match(v))
+        is_preferred = (v == preferred)
         mixed_case = v != v.upper() and v != v.lower()
         commas = v.count(",")
         good_comma = commas == 1
-        return (canonical, mixed_case, good_comma, -abs(commas - 1), len(v))
+        return (canonical, is_preferred, mixed_case, good_comma, -abs(commas - 1), len(v))
     return max(variants, key=score)
 
 
@@ -83,7 +90,7 @@ def classify_event(raw: str, fallback_kind: str) -> tuple[str, dict]:
 
     Returns (event_kind, extra_fields).
     """
-    text = (raw or "").strip().lower()
+    text = re.sub(r"\s+", " ", (raw or "")).strip().lower()
 
     if text.startswith("3 punto"):
         return "made_3", {}
@@ -159,6 +166,125 @@ def is_played(p: dict) -> bool:
     return any(p[k] for k in ("pts", "t2", "t3", "tl_made", "tl_att", "fp"))
 
 
+def _is_abbreviation(short: str, long: str) -> bool:
+    """Return True if every token in `short` maps to a token in `long`:
+    single-letter tokens must match the first letter of a longer token;
+    multi-letter tokens must match or be a prefix (≥3 chars) of a longer token.
+    Tokens are matched greedily left-to-right without reuse."""
+    s_tokens = short.split()
+    l_tokens = long.split()
+    if len(s_tokens) > len(l_tokens):
+        return False
+    used: set[int] = set()
+    for st in s_tokens:
+        matched = False
+        for idx, lt in enumerate(l_tokens):
+            if idx in used:
+                continue
+            if len(st) == 1:
+                if lt[0] == st:
+                    used.add(idx)
+                    matched = True
+                    break
+            else:
+                if lt == st or (len(st) >= 3 and lt.startswith(st[:3])):
+                    used.add(idx)
+                    matched = True
+                    break
+        if not matched:
+            return False
+    return True
+
+
+def _merge_name_aliases(
+    players: dict,
+    player_game_stats: list[dict],
+    threshold: float = 0.80,
+) -> dict[str, str]:
+    """Merge likely-typo duplicates: same team, shared dorsal, compatible initials,
+    and either name-key similarity >= threshold OR one name is an abbreviation of
+    the other. Returns old_id -> canonical_id redirect map.
+    Mutates `players` in-place (removes alias entries, merges their variants/dorsals
+    into the canonical entry)."""
+
+    gp: dict[str, int] = defaultdict(int)
+    for r in player_game_stats:
+        if r["played"]:
+            gp[r["player_id"]] += 1
+
+    def _initials(nk: str) -> set[str]:
+        return {t for t in nk.split() if len(t) == 1}
+
+    def _compatible(nk1: str, nk2: str) -> bool:
+        i1, i2 = _initials(nk1), _initials(nk2)
+        # If either name has no parseable initial we can't rule it out.
+        if not i1 or not i2:
+            return True
+        return bool(i1 & i2)
+
+    def _should_merge(nk1: str, nk2: str) -> bool:
+        if SequenceMatcher(None, nk1, nk2).ratio() >= threshold:
+            return True
+        # Detect full-name vs initial pattern (e.g. "MIRANDA GABINA JUNE" vs "MIRANDA J").
+        t1, t2 = nk1.split(), nk2.split()
+        shorter, longer = (nk1, nk2) if len(t1) <= len(t2) else (nk2, nk1)
+        return _is_abbreviation(shorter, longer)
+
+    by_team: dict[str, list] = defaultdict(list)
+    for key in players:
+        by_team[key[0]].append(key)
+
+    parent: dict[str, str] = {}
+
+    def find(pid: str) -> str:
+        while pid in parent:
+            pid = parent[pid]
+        return pid
+
+    def union(a: str, b: str) -> None:
+        ra, rb = find(a), find(b)
+        if ra == rb:
+            return
+        # Canonical = more games played (more data = more authoritative name).
+        if gp.get(ra, 0) >= gp.get(rb, 0):
+            parent[rb] = ra
+        else:
+            parent[ra] = rb
+
+    for team_keys in by_team.values():
+        entries = [(k, players[k]) for k in team_keys]
+        for i in range(len(entries)):
+            for j in range(i + 1, len(entries)):
+                ki, info_i = entries[i]
+                kj, info_j = entries[j]
+                if not (info_i["dorsals"] & info_j["dorsals"]):
+                    continue
+                if not _compatible(ki[1], kj[1]):
+                    continue
+                if not _should_merge(ki[1], kj[1]):
+                    continue
+                union(info_i["id"], info_j["id"])
+
+    redirect: dict[str, str] = {}
+    id_to_key = {info["id"]: k for k, info in players.items()}
+    to_delete: list = []
+    for k, info in list(players.items()):
+        root = find(info["id"])
+        if root != info["id"]:
+            redirect[info["id"]] = root
+            canon_key = id_to_key[root]
+            players[canon_key]["name_variants"] |= info["name_variants"]
+            players[canon_key]["dorsals"] |= info["dorsals"]
+            # Propagate the more recently seen name to the canonical entry.
+            if info.get("last_seq", 0) > players[canon_key].get("last_seq", 0):
+                players[canon_key]["name"] = info["name"]
+                players[canon_key]["last_seq"] = info["last_seq"]
+            to_delete.append(k)
+    for k in to_delete:
+        del players[k]
+    return redirect
+
+
 # ---------------------------------------------------------------------------
 # build
 # ---------------------------------------------------------------------------
@@ -193,8 +319,10 @@ def build_database(in_dir: Path) -> dict:
     games: list[dict] = []
     player_game_stats: list[dict] = []
     log_events: list[dict] = []
+    _seq = [0]  # global call counter to track which name was seen most recently
 
     def get_player_id(team_id: str, name: str, dorsal: str | None) -> str:
+        _seq[0] += 1
         key = (team_id, _name_key(name))
         if key not in players:
             players[key] = {
@@ -204,9 +332,12 @@ def build_database(in_dir: Path) -> dict:
                 "name": name,
                 "name_variants": {name},
                 "dorsals": set(),
+                "last_seq": _seq[0],
             }
         else:
             players[key]["name_variants"].add(name)
+            players[key]["name"] = name        # update to most-recently-seen spelling
+            players[key]["last_seq"] = _seq[0]
         if dorsal:
             players[key]["dorsals"].add(dorsal)
         return players[key]["id"]
@@ -220,10 +351,18 @@ def build_database(in_dir: Path) -> dict:
             # attached; fall back to name+logo resolution.
             home_id = m.get("home_team_id") or resolve_team_id(m.get("home_team"), m.get("home_logo"))
             away_id = m.get("away_team_id") or resolve_team_id(m.get("away_team"), m.get("away_logo"))
+            no_pid_date = None
+            if m.get("starts_at"):
+                for fmt in ("%d/%m/%Y %H:%M", "%d/%m/%Y"):
+                    try:
+                        no_pid_date = datetime.strptime(m["starts_at"], fmt).isoformat()
+                        break
+                    except ValueError:
+                        pass
             games.append({
                 "id": None,
                 "jornada": m["jornada"],
-                "date": None,
+                "date": no_pid_date,
                 "venue": m.get("venue"),
                 "status": m.get("status"),
                 "home_team_id": home_id,
@@ -238,18 +377,25 @@ def build_database(in_dir: Path) -> dict:
 
         match_path = in_dir / "matches" / f"{pid}.json"
         if not match_path.exists():
+            log.warning("Match detail file missing for partido_id=%s — skipping box scores for this game", pid)
             continue
         detail = json.loads(match_path.read_text(encoding="utf-8"))
 
         home_team_id = resolve_team_id(detail["home"]["team"], detail["home"].get("logo"))
         away_team_id = resolve_team_id(detail["away"]["team"], detail["away"].get("logo"))
+        if not home_team_id:
+            log.warning("Could not resolve home team_id for match %s (name=%r)", pid, detail["home"]["team"])
+        if not away_team_id:
+            log.warning("Could not resolve away team_id for match %s (name=%r)", pid, detail["away"]["team"])
 
         date_iso = None
         if m.get("starts_at"):
-            try:
-                date_iso = datetime.strptime(m["starts_at"], "%d/%m/%Y %H:%M").isoformat()
-            except ValueError:
-                pass
+            for fmt in ("%d/%m/%Y %H:%M", "%d/%m/%Y"):
+                try:
+                    date_iso = datetime.strptime(m["starts_at"], fmt).isoformat()
+                    break
+                except ValueError:
+                    pass
 
         home_score = detail["home"]["total_pts"]
         away_score = detail["away"]["total_pts"]
@@ -273,6 +419,8 @@ def build_database(in_dir: Path) -> dict:
         per_player_q: dict[str, dict[str, dict[str, int]]] = defaultdict(
             lambda: defaultdict(lambda: {"pts": 0, "t2": 0, "t3": 0, "tl_made": 0, "tl_att": 0, "fp": 0})
         )
+        # name -> dict(fp_personal, fp_technical, fp_anti)
+        per_player_fouls: dict = defaultdict(lambda: {"fp_personal": 0, "fp_technical": 0, "fp_anti": 0})
 
         for seq, e in enumerate(detail["log"]):
             kind, extra = classify_event(e.get("event", ""), e.get("event_kind", "other"))
@@ -302,6 +450,13 @@ def build_database(in_dir: Path) -> dict:
                     bucket["tl_att"] += 1
                 elif kind.startswith("foul_"):
                     bucket["fp"] += 1
+                    fk = per_player_fouls[(team_id_ev, _name_key(pname))]
+                    if kind == "foul_personal":
+                        fk["fp_personal"] += 1
+                    elif kind == "foul_technical":
+                        fk["fp_technical"] += 1
+                    else:  # foul_unsportsmanlike, foul_disqualifying
+                        fk["fp_anti"] += 1
 
             log_events.append({
                 "game_id": pid,
@@ -336,6 +491,7 @@ def build_database(in_dir: Path) -> dict:
                         period: dict(stats)
                         for period, stats in sorted(per_player_q[(side_team_id, _name_key(p["name"]))].items())
                     }
+                foul_breakdown = per_player_fouls[(side_team_id, _name_key(p["name"]))]
                 player_game_stats.append({
                     "game_id": pid,
                     "player_id": player_id,
@@ -344,10 +500,23 @@ def build_database(in_dir: Path) -> dict:
                     "dorsal": p.get("dorsal"),
                     "pts": p["pts"], "t2": p["t2"], "t3": p["t3"],
                     "tl_made": p["tl_made"], "tl_att": p["tl_att"], "fp": p["fp"],
+                    "fp_personal": foul_breakdown["fp_personal"],
+                    "fp_technical": foul_breakdown["fp_technical"],
+                    "fp_anti": foul_breakdown["fp_anti"],
                     "ft_pct": _round(p["tl_made"] / p["tl_att"], 3) if p["tl_att"] else None,
                     "played": played,
                     "by_quarter": by_quarter,
                 })
+
+    # ---- merge typo duplicates (same team+dorsal, similar name, compatible initials) ----
+    redirect = _merge_name_aliases(players, player_game_stats)
+    if redirect:
+        for r in player_game_stats:
+            if r["player_id"] in redirect:
+                r["player_id"] = redirect[r["player_id"]]
+        for e in log_events:
+            if e.get("player_id") and e["player_id"] in redirect:
+                e["player_id"] = redirect[e["player_id"]]
 
     # ---- season aggregates per player (only games they actually played) ----
     player_season = _player_season_stats(player_game_stats)
@@ -371,7 +540,7 @@ def build_database(in_dir: Path) -> dict:
                 "id": info["id"],
                 "team_id": info["team_id"],
                 "team_name": info["team_name"],
-                "name": _best_display_name(info["name_variants"]),
+                "name": _best_display_name(info["name_variants"], preferred=info.get("name")),
                 "name_variants": sorted(info["name_variants"]),
                 "dorsals": sorted(info["dorsals"], key=lambda d: (len(d), d)),
             }
@@ -406,7 +575,7 @@ def _player_season_stats(pgs_rows: list[dict]) -> list[dict]:
                 "player_id": r["player_id"],
                 "team_id": r["team_id"],
                 "games_played": 0,
-                "totals": {"pts": 0, "t2": 0, "t3": 0, "tl_made": 0, "tl_att": 0, "fp": 0},
+                "totals": {"pts": 0, "t2": 0, "t3": 0, "tl_made": 0, "tl_att": 0, "fp": 0, "fp_personal": 0, "fp_technical": 0, "fp_anti": 0},
                 "per_quarter_totals": defaultdict(
                     lambda: {"pts": 0, "t2": 0, "t3": 0, "tl_made": 0, "tl_att": 0, "fp": 0}
                 ),

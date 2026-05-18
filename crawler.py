@@ -24,25 +24,58 @@ from __future__ import annotations
 import argparse
 import json
 import logging
-import re
+import os
+import subprocess
 import sys
 import time
-import unicodedata
-from dataclasses import dataclass
 from datetime import date, datetime, timedelta
 from pathlib import Path
 from typing import Iterable
 
 import requests
-from bs4 import BeautifulSoup, Tag
+from bs4 import BeautifulSoup
 
-BASE = "https://basketaraba.com/actadigital"
-USER_AGENT = (
-    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
-    "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36"
+from scraper.common import (
+    BASE,
+    USER_AGENT,
+    GroupRef,
+    JornadaMatchEntry,
+    MatchDetail,
+    SeasonCalendar,
+    ddmmyyyy_to_monday as _ddmmyyyy_to_monday,
+    detect_season as _detect_season,
+    extract_group_id as _extract_group_id,
+    norm_text as _norm,
+    parse_calendar as _parse_calendar,
+    parse_match as _parse_match,
+    parse_week_jornada as _parse_week_jornada,
+    slugify as _slugify,
+    to_dict as _to_dict,
+    write_json as _write_json,
+    write_raw as _write_raw,
 )
 
 log = logging.getLogger("basketaraba")
+
+
+def _write_metrics_file(path: Path, payload: dict) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True), encoding="utf-8")
+
+
+def _write_metrics_snapshot(root: Path, group_name: str, label: str, payload: dict) -> Path:
+    timestamp = datetime.now()
+    snapshot_path = root / _slugify(group_name) / timestamp.strftime("%Y-%m-%d") / f"{timestamp.strftime('%H%M%S')}_{label}.json"
+    _write_metrics_file(snapshot_path, payload)
+    return snapshot_path
+
+
+def _emit_metrics(metrics: dict) -> None:
+    metrics_out = os.environ.get("BASKETARABA_METRICS_OUT")
+    if metrics_out:
+        _write_metrics_file(Path(metrics_out), metrics)
+    if os.environ.get("BASKETARABA_EMIT_METRICS_JSON") == "1":
+        print(f"METRICS_JSON: {json.dumps(metrics, sort_keys=True)}", flush=True)
 
 
 # ---------------------------------------------------------------------------
@@ -54,9 +87,11 @@ class Client:
         self.s = requests.Session()
         self.s.headers["User-Agent"] = USER_AGENT
         self.sleep = sleep
+        self.request_count = 0
 
     def get(self, url: str) -> str:
         log.debug("GET %s", url)
+        self.request_count += 1
         r = self.s.get(url, timeout=30)
         r.raise_for_status()
         time.sleep(self.sleep)
@@ -67,57 +102,54 @@ class Client:
 # Group / category resolution
 # ---------------------------------------------------------------------------
 
-@dataclass
-class GroupRef:
-    category_name: str    # e.g. "SENIOR MASCULINA 3ª"
-    category_id: str      # e.g. "684037903b2cd"
-    group_name: str       # e.g. "SENIOR MASCULINA 3ª-GRUPO A"
-    group_id: str         # e.g. "68c8052bc76df"
 
+def resolve_group(
+    client: Client,
+    group_name: str,
+    *,
+    category_id: str | None = None,
+    group_id: str | None = None,
+    heading: str | None = None,
+) -> GroupRef:
+    """Resolve a group like 'SENIOR MASCULINA 3ª-GRUPO A' to its IDs.
 
-def _norm(s: str) -> str:
-    s = unicodedata.normalize("NFKC", s).strip().upper()
-    return re.sub(r"\s+", " ", s)
-
-
-def _slugify(s: str) -> str:
-    s = unicodedata.normalize("NFKD", s).encode("ascii", "ignore").decode()
-    s = re.sub(r"[^A-Za-z0-9]+", "-", s).strip("-").lower()
-    return s
-
-
-def resolve_group(client: Client, group_name: str) -> GroupRef:
-    """Resolve a group like 'SENIOR MASCULINA 3ª-GRUPO A' to its IDs."""
+    category_id and heading can be supplied by discover_groups() to skip the
+    expensive category-option lookup and the h3-matching scan respectively.
+    The heading is the raw normalised h3 text from the jornada HTML; it may
+    differ from group_name when the site uses abbreviations.
+    """
     target = _norm(group_name)
+    heading_norm = _norm(heading) if heading else target
 
-    # Find category — the part before "-GRUPO" (or full name if no group split).
-    if "-GRUPO" in target:
-        category_name = target.split("-GRUPO", 1)[0].strip()
+    if category_id is None:
+        # Find category — the part before "-GRUPO" (or full name if no split).
+        if "-GRUPO" in target:
+            category_name = target.split("-GRUPO", 1)[0].strip()
+        else:
+            category_name = target
+
+        html = client.get(f"{BASE}/jornada")
+        soup = BeautifulSoup(html, "lxml")
+
+        categoria_select = soup.select_one("#categoria")
+        if not categoria_select:
+            raise RuntimeError("Could not find categoria <select> on jornada page")
+
+        for opt in categoria_select.select("option"):
+            if not opt.get("value"):
+                continue
+            if _norm(opt.get_text()) == category_name:
+                category_id = opt["value"]
+                break
+        if not category_id:
+            opts = [o.get_text(strip=True) for o in categoria_select.select("option") if o.get("value")]
+            raise RuntimeError(f"Category {category_name!r} not found. Available: {opts}")
     else:
-        category_name = target
-
-    html = client.get(f"{BASE}/jornada")
-    soup = BeautifulSoup(html, "lxml")
-
-    categoria_select = soup.select_one("#categoria")
-    if not categoria_select:
-        raise RuntimeError("Could not find categoria <select> on jornada page")
-
-    category_id = None
-    for opt in categoria_select.select("option"):
-        if not opt.get("value"):
-            continue
-        if _norm(opt.get_text()) == category_name:
-            category_id = opt["value"]
-            break
-    if not category_id:
-        opts = [o.get_text(strip=True) for o in categoria_select.select("option") if o.get("value")]
-        raise RuntimeError(f"Category {category_name!r} not found. Available: {opts}")
+        category_name = _norm(group_name).split("-GRUPO", 1)[0].strip() if "-GRUPO" in target else target
 
     # Walk weeks to find the group_id from the dameJornada response.
-    # We try recent weeks until we see the group header; basketaraba returns
-    # all groups of the category for a given week.
-    group_id = _find_group_id(client, category_id, target)
+    if not group_id:
+        group_id = _find_group_id(client, category_id, heading_norm)
     return GroupRef(category_name=category_name, category_id=category_id,
                     group_name=target, group_id=group_id)
 
@@ -138,48 +170,57 @@ def _find_group_id(client: Client, category_id: str, group_name_norm: str) -> st
     raise RuntimeError(f"Could not find group {group_name_norm!r} in any recent jornada")
 
 
-def _extract_group_id(html: str, group_name_norm: str) -> str | None:
-    """In a dameJornada HTML, find the verCalendario id for the given group header."""
+def discover_groups(client: Client, *, weeks: int = 2) -> list[dict]:
+    """Return all groups available on the site.
+
+    Scans `weeks` past weeks per category (default: 2 = current + previous).
+    Pass weeks=30 to cover the full season.
+
+    Each entry is a dict with:
+      name        - canonical slug-friendly name (category option text + suffix)
+      heading     - raw normalised h3 text as it appears in the jornada HTML
+      category_id - category option value from the #categoria <select>
+    """
+    html = client.get(f"{BASE}/jornada")
     soup = BeautifulSoup(html, "lxml")
-    for header in soup.select("div.categoria h3"):
-        if _norm(header.get_text()) != group_name_norm:
+    today = date.today()
+    monday = today - timedelta(days=today.weekday())
+    groups: list[dict] = []
+    seen: set[str] = set()
+    for opt in soup.select("#categoria option"):
+        if not opt.get("value"):
             continue
-        # Look forward through following siblings until next categoria header.
-        node = header.find_parent("div", class_="categoria")
-        for sib in node.find_all_next():
-            if sib.name == "div" and "categoria" in (sib.get("class") or []):
-                break
-            onclick = sib.get("onclick", "") if isinstance(sib, Tag) else ""
-            m = re.search(r"verCalendario\('([a-f0-9]+)'\)", onclick)
-            if m:
-                return m.group(1)
-    return None
-
-
-# ---------------------------------------------------------------------------
-# Calendar parsing
-# ---------------------------------------------------------------------------
-
-@dataclass
-class CalendarMatch:
-    jornada: int
-    jornada_date: str  # DD/MM/YYYY
-    home_team: str
-    away_team: str
-    home_team_id: str
-    away_team_id: str
-    home_logo: str | None      # logo filename basename
-    away_logo: str | None
-    home_score: int | None
-    away_score: int | None
-    score: str | None          # raw "80 - 46" or None if not played
-
-
-@dataclass
-class SeasonCalendar:
-    group_name: str
-    teams: dict[str, str]  # id -> name
-    matches: list[CalendarMatch]
+        cat_id = opt["value"]
+        category_text = opt.get_text(strip=True)
+        for offset in range(0, weeks):
+            week = monday - timedelta(weeks=offset)
+            week_html = client.get(
+                f"{BASE}/ajax/dameJornada.php?live=1&week={week.isoformat()}&categoria={cat_id}"
+            )
+            for heading, _ in _parse_week_jornada(week_html):
+                # Discard groups without a verCalendario button — they are
+                # elimination rounds (F4, CRUCES, FINAL COPA) with no season
+                # calendar and cannot be scraped.
+                if _extract_group_id(week_html, heading) is None:
+                    continue
+                if heading == "PRUEBA":
+                    continue
+                # Reconstruct a canonical name from the dropdown option text so
+                # it works as a stable directory slug even when the site uses
+                # abbreviations in the h3 (e.g. "SEN.MAS.1A-GRUPO UNICO").
+                if "-GRUPO" in heading:
+                    suffix = heading.split("-GRUPO", 1)[1].strip()
+                    canonical = f"{category_text}-GRUPO {suffix}"
+                else:
+                    canonical = heading  # keep full heading for F4 / Play-In etc.
+                if canonical not in seen:
+                    groups.append({
+                        "name": canonical,
+                        "heading": heading,
+                        "category_id": cat_id,
+                    })
+                    seen.add(canonical)
+    return groups
 
 
 def fetch_calendar(client: Client, group: GroupRef) -> tuple[str, SeasonCalendar]:
@@ -187,91 +228,9 @@ def fetch_calendar(client: Client, group: GroupRef) -> tuple[str, SeasonCalendar
     return html, _parse_calendar(html, group.group_name)
 
 
-def _parse_calendar(html: str, group_name: str) -> SeasonCalendar:
-    soup = BeautifulSoup(html, "lxml")
-
-    teams: dict[str, str] = {}
-    sel = soup.select_one("#equipo")
-    if sel:
-        for opt in sel.select("option"):
-            if opt.get("value") and opt["value"] != "-1":
-                teams[opt["value"]] = opt.get_text(strip=True)
-
-    matches: list[CalendarMatch] = []
-    # Each jornada is a <table> with <thead><tr class="cabecera"> followed by
-    # <tbody> with <tr class="partido ..."> rows.
-    for table in soup.select("table"):
-        head_row = table.select_one("tr.cabecera")
-        if not head_row:
-            continue
-        cells = head_row.find_all("td")
-        if len(cells) < 3:
-            continue
-        m_jor = re.search(r"JORNADA\s+(\d+)", cells[0].get_text())
-        m_date = re.search(r"(\d{2}/\d{2}/\d{4})", cells[2].get_text())
-        if not (m_jor and m_date):
-            continue
-        jornada = int(m_jor.group(1))
-        jornada_date = m_date.group(1)
-
-        for tr in table.select("tr.partido"):
-            classes = tr.get("class") or []
-            team_ids = [c.replace("Equipo", "") for c in classes if c.startswith("Equipo")]
-            tds = tr.find_all("td")
-            if len(tds) < 3:
-                continue
-            # Strip the logo's text-equivalent away — names come from the td text.
-            home = tds[0].get_text(strip=True)
-            score_text = tds[1].get_text(strip=True)
-            away = tds[2].get_text(strip=True)
-            score = score_text if re.search(r"\d", score_text) else None
-            m_score = re.match(r"\s*(\d+)\s*-\s*(\d+)", score_text)
-            home_score = int(m_score.group(1)) if m_score else None
-            away_score = int(m_score.group(2)) if m_score else None
-            home_img = tds[0].find("img")
-            away_img = tds[2].find("img")
-            home_logo = _logo_base(home_img["src"]) if home_img and home_img.get("src") else None
-            away_logo = _logo_base(away_img["src"]) if away_img and away_img.get("src") else None
-            matches.append(
-                CalendarMatch(
-                    jornada=jornada,
-                    jornada_date=jornada_date,
-                    home_team=home,
-                    away_team=away,
-                    home_team_id=team_ids[0] if len(team_ids) > 0 else "",
-                    away_team_id=team_ids[1] if len(team_ids) > 1 else "",
-                    home_logo=home_logo,
-                    away_logo=away_logo,
-                    home_score=home_score,
-                    away_score=away_score,
-                    score=score,
-                )
-            )
-
-    return SeasonCalendar(group_name=group_name, teams=teams, matches=matches)
-
-
 # ---------------------------------------------------------------------------
 # Match-id resolution: walk weekly jornadas to map matchup → partido id
 # ---------------------------------------------------------------------------
-
-def _ddmmyyyy_to_monday(s: str) -> date:
-    d = datetime.strptime(s, "%d/%m/%Y").date()
-    return d - timedelta(days=d.weekday())
-
-
-@dataclass
-class JornadaMatchEntry:
-    partido_id: str
-    home_team: str
-    away_team: str
-    home_score: int | None
-    away_score: int | None
-    status: str            # e.g. "FINALIZADO", "P3", "SIN EMPEZAR"
-    venue: str | None
-    starts_at: str | None  # "DD/MM/YYYY HH:MM"
-    home_logo: str | None = None
-    away_logo: str | None = None
 
 
 def fetch_week_jornada(client: Client, category_id: str, monday: date) -> tuple[str, list[tuple[str, JornadaMatchEntry]]]:
@@ -282,393 +241,132 @@ def fetch_week_jornada(client: Client, category_id: str, monday: date) -> tuple[
     return html, _parse_week_jornada(html)
 
 
-def _parse_week_jornada(html: str) -> list[tuple[str, JornadaMatchEntry]]:
-    soup = BeautifulSoup(html, "lxml")
-    out: list[tuple[str, JornadaMatchEntry]] = []
-    current_group: str | None = None
-    # The flat HTML has <div class="categoria"> headers followed by match
-    # containers (<div class="container2" onclick="verPartido(...)"> for
-    # finished/in-progress matches; <div class="container"> for not-started).
-    for node in soup.find("body").descendants if soup.find("body") else soup.descendants:
-        if not isinstance(node, Tag):
-            continue
-        classes = node.get("class") or []
-        if "categoria" in classes:
-            h = node.find("h3")
-            if h:
-                current_group = _norm(h.get_text())
-            continue
-        if node.name != "div":
-            continue
-        if "container2" not in classes and "container" not in classes:
-            continue
-        # Top-level match block only; skip nested ones already visited.
-        if node.find_parent("div", class_="container2") or node.find_parent("div", class_="container"):
-            continue
-        entry = _parse_match_block(node)
-        if entry and current_group:
-            out.append((current_group, entry))
-    return out
-
-
-def _parse_match_block(div: Tag) -> JornadaMatchEntry | None:
-    onclick = div.get("onclick", "")
-    m = re.search(r"verPartido\('([a-f0-9]+)'\)", onclick)
-    partido_id = m.group(1) if m else ""
-
-    status_td = div.select_one("table.top-info td")
-    status = status_td.get_text(strip=True) if status_td else ""
-
-    teams = div.select("table.scoreboard tr.team-score")
-    if len(teams) < 2:
-        return None
-
-    def _name(tr: Tag) -> str:
-        tds = tr.find_all("td")
-        return tds[1].get_text(strip=True) if len(tds) >= 2 else ""
-
-    def _score(tr: Tag) -> int | None:
-        tds = tr.find_all("td")
-        if len(tds) < 3:
-            return None
-        txt = tds[2].get_text(strip=True)
-        return int(txt) if txt.isdigit() else None
-
-    def _row_logo(tr: Tag) -> str | None:
-        img = tr.select_one("img")
-        return _logo_base(img.get("src")) if img and img.get("src") else None
-
-    home, away = teams[0], teams[1]
-    bottom_tds = div.select("table.bottom-info td")
-    venue = bottom_tds[0].get_text(strip=True) if bottom_tds else None
-    starts_at = bottom_tds[1].get_text(strip=True) if len(bottom_tds) > 1 else None
-
-    if not partido_id:
-        # Not-played-yet block — still useful for the index but no id to crawl.
-        partido_id = ""
-
-    return JornadaMatchEntry(
-        partido_id=partido_id,
-        home_team=_name(home),
-        away_team=_name(away),
-        home_score=_score(home),
-        away_score=_score(away),
-        status=status,
-        venue=venue,
-        starts_at=starts_at,
-        home_logo=_row_logo(home),
-        away_logo=_row_logo(away),
-    )
-
-
-# ---------------------------------------------------------------------------
-# Match detail parsing
-# ---------------------------------------------------------------------------
-
-@dataclass
-class PlayerStat:
-    dorsal: str
-    name: str
-    pts: int
-    t2: int   # made 2-pointers
-    t3: int   # made 3-pointers
-    tl_made: int
-    tl_att: int
-    fp: int   # personal fouls
-
-
-@dataclass
-class TeamBox:
-    team: str
-    color: str | None
-    logo: str | None
-    total_pts: int
-    total_t2: int
-    total_t3: int
-    total_tl_made: int
-    total_tl_att: int
-    total_fp: int
-    players: list[PlayerStat]
-
-
-@dataclass
-class LogEntry:
-    period: str          # "P1".."P4" (or "PROL" etc.)
-    clock: str           # "MM:SS" remaining in period
-    side: str            # "home" / "away" / "neutral"
-    event: str           # raw description, e.g. "3 Puntos", "Tiro libre 2/2 metido", "Tiempo Muerto"
-    event_kind: str      # canonical: "made_2", "made_3", "ft_made", "ft_missed", "timeout", "period_end", "other"
-    ft_made: int | None  # for free throws: 1 if made else 0
-    ft_index: int | None  # X in "X/Y"
-    ft_of: int | None     # Y in "X/Y"
-    player_dorsal: str | None
-    player_name: str | None
-    score_home: int | None
-    score_away: int | None
-
-
-@dataclass
-class MatchDetail:
-    partido_id: str
-    status: str
-    starts_at: str | None
-    category: str | None
-    home: TeamBox
-    away: TeamBox
-    quarters: list[tuple[int, int]]   # [(home_q1, away_q1), ...]
-    log: list[LogEntry]
-
-
 def fetch_match(client: Client, partido_id: str) -> tuple[str, MatchDetail]:
     html = client.get(f"{BASE}/ajax/damePartido.php?partido={partido_id}")
     return html, _parse_match(html, partido_id)
 
 
-_FT_RE = re.compile(r"Tiro libre\s+(\d+)\s*/\s*(\d+)\s+(metido|fallado)", re.IGNORECASE)
-
-
-def _classify_event(desc: str) -> tuple[str, dict]:
-    d = desc.strip()
-    if d.lower().startswith("3 punto"):
-        return "made_3", {}
-    if d.lower().startswith("2 punto"):
-        return "made_2", {}
-    if d.lower().startswith("tiro libre"):
-        m = _FT_RE.search(d)
-        if m:
-            x, y, status = int(m.group(1)), int(m.group(2)), m.group(3).lower()
-            kind = "ft_made" if status == "metido" else "ft_missed"
-            return kind, {"ft_index": x, "ft_of": y, "ft_made": 1 if status == "metido" else 0}
-        return "ft_missed", {}
-    if "tiempo muerto" in d.lower():
-        return "timeout", {}
-    if "fin de periodo" in d.lower():
-        return "period_end", {}
-    return "other", {}
-
-
-def _parse_match(html: str, partido_id: str) -> MatchDetail:
-    soup = BeautifulSoup(html, "lxml")
-
-    # --- Header / scoreboard
-    teams = soup.select("table.scoreboard tr.team-score")
-    if len(teams) < 2:
-        raise RuntimeError(f"Match {partido_id}: could not parse scoreboard")
-
-    def _logo(tr: Tag) -> str | None:
-        img = tr.select_one("img")
-        return img.get("src") if img else None
-
-    def _name(tr: Tag) -> str:
-        tds = tr.find_all("td")
-        return tds[1].get_text(strip=True) if len(tds) >= 2 else ""
-
-    def _color(tr: Tag) -> str | None:
-        tds = tr.find_all("td")
-        if len(tds) < 2:
-            return None
-        style = tds[1].get("style", "")
-        m = re.search(r"color:\s*(#[0-9A-Fa-f]{3,6})", style)
-        return m.group(1).upper() if m else None
-
-    def _score(tr: Tag) -> int:
-        tds = tr.find_all("td")
-        return int(tds[2].get_text(strip=True)) if len(tds) >= 3 and tds[2].get_text(strip=True).isdigit() else 0
-
-    home_tr, away_tr = teams[0], teams[1]
-    home_name, away_name = _name(home_tr), _name(away_tr)
-    home_color, away_color = _color(home_tr), _color(away_tr)
-    home_logo, away_logo = _logo(home_tr), _logo(away_tr)
-
-    status = ""
-    top = soup.select_one("table.top-info td")
-    if top:
-        status = top.get_text(strip=True)
-
-    bottom_tds = soup.select("div.top-left table.bottom-info td")
-    category = bottom_tds[0].get_text(strip=True) if bottom_tds else None
-    starts_at = bottom_tds[1].get_text(strip=True) if len(bottom_tds) > 1 else None
-
-    # --- Per-quarter scores: "| 7 - 17 | 17 - 16 | 10 - 19 | 15 - 11 |"
-    quarters: list[tuple[int, int]] = []
-    qdiv = soup.select_one("div.bottom-left > div")
-    if qdiv:
-        for chunk in re.findall(r"(\d+)\s*-\s*(\d+)", qdiv.get_text()):
-            quarters.append((int(chunk[0]), int(chunk[1])))
-
-    # --- Player tables (one per team, in display order home, away).
-    tables = soup.select("div.team-tables table.actions-table")
-    if len(tables) < 2:
-        raise RuntimeError(f"Match {partido_id}: missing player tables")
-    home_box = _parse_team_box(tables[0], home_name, home_color, home_logo)
-    away_box = _parse_team_box(tables[1], away_name, away_color, away_logo)
-    # Update box scores to match scoreboard (player table totals should match).
-    home_box.total_pts = _score(home_tr) or home_box.total_pts
-    away_box.total_pts = _score(away_tr) or away_box.total_pts
-
-    # --- Play-by-play log.
-    log_entries: list[LogEntry] = []
-    home_logo_base = _logo_base(home_logo)
-    away_logo_base = _logo_base(away_logo)
-    for item in soup.select("div.elementoAccion"):
-        period_el = item.select_one("span.ge-match-time-info")
-        clock_el = item.select_one("span.ge-match-time-sec")
-        if not period_el or not clock_el:
-            continue
-        period = period_el.get_text(strip=True)
-        clock = clock_el.get_text(strip=True)
-
-        side = "neutral"
-        img = item.select_one(".pp-item-mes-info img")
-        if img:
-            base = _logo_base(img.get("src"))
-            if base == home_logo_base:
-                side = "home"
-            elif base == away_logo_base:
-                side = "away"
-
-        desc_spans = item.select("span.pp-item-mes-info-text__desc")
-        event = desc_spans[0].get_text(strip=True) if desc_spans else ""
-        player_dorsal: str | None = None
-        player_name: str | None = None
-        if len(desc_spans) >= 2:
-            m = re.match(r"#\s*(\S+)\s+(.+)", desc_spans[1].get_text(strip=True))
-            if m:
-                player_dorsal, player_name = m.group(1), m.group(2).strip()
-
-        local_el = item.select_one("span.pp-item-mes-score__local")
-        visitor_el = item.select_one("span.pp-item-mes-score__visitor")
-        score_home = int(local_el.get_text(strip=True)) if local_el and local_el.get_text(strip=True).isdigit() else None
-        score_away = int(visitor_el.get_text(strip=True)) if visitor_el and visitor_el.get_text(strip=True).isdigit() else None
-
-        kind, extra = _classify_event(event)
-        log_entries.append(LogEntry(
-            period=period, clock=clock, side=side, event=event, event_kind=kind,
-            ft_made=extra.get("ft_made"), ft_index=extra.get("ft_index"), ft_of=extra.get("ft_of"),
-            player_dorsal=player_dorsal, player_name=player_name,
-            score_home=score_home, score_away=score_away,
-        ))
-
-    return MatchDetail(
-        partido_id=partido_id,
-        status=status,
-        starts_at=starts_at,
-        category=category,
-        home=home_box,
-        away=away_box,
-        quarters=quarters,
-        log=log_entries,
-    )
-
-
-def _logo_base(src: str | None) -> str | None:
-    if not src:
-        return None
-    return src.rsplit("/", 1)[-1]
-
-
-def _parse_team_box(table: Tag, team: str, color: str | None, logo: str | None) -> TeamBox:
-    # Header cells: PTS, T2, T3, TL, FP. The first cell is the player name.
-    rows = table.select("tbody tr")
-    players: list[PlayerStat] = []
-    totals = (0, 0, 0, 0, 0, 0)  # pts, t2, t3, tl_made, tl_att, fp
-    for tr in rows:
-        tds = tr.find_all("td")
-        if not tds:
-            continue
-        first = tds[0].get_text(strip=True)
-        if first.lower().startswith("totales"):
-            pts, t2, t3, tl_made, tl_att, fp = _read_stat_cells(tds[1:])
-            totals = (pts, t2, t3, tl_made, tl_att, fp)
-            continue
-        m = re.match(r"#\s*(\S+)\s+(.+)", first)
-        if not m:
-            continue
-        dorsal, name = m.group(1), m.group(2).strip()
-        pts, t2, t3, tl_made, tl_att, fp = _read_stat_cells(tds[1:])
-        players.append(PlayerStat(dorsal=dorsal, name=name, pts=pts, t2=t2, t3=t3,
-                                  tl_made=tl_made, tl_att=tl_att, fp=fp))
-
-    return TeamBox(
-        team=team, color=color, logo=logo,
-        total_pts=totals[0], total_t2=totals[1], total_t3=totals[2],
-        total_tl_made=totals[3], total_tl_att=totals[4], total_fp=totals[5],
-        players=players,
-    )
-
-
-def _read_stat_cells(cells: list[Tag]) -> tuple[int, int, int, int, int, int]:
-    """Read [PTS, T2, T3, TL, FP] from cells. TL is 'made/att'."""
-    def _int(t: str) -> int:
-        t = t.strip()
-        return int(t) if t.isdigit() else 0
-
-    vals = [c.get_text(strip=True) for c in cells]
-    # Some rows have padding/extra empty cells; filter blanks but keep order.
-    vals = [v for v in vals if v != ""]
-    # Expected layout: PTS T2 T3 TL FP
-    pts = _int(vals[0]) if len(vals) > 0 else 0
-    t2 = _int(vals[1]) if len(vals) > 1 else 0
-    t3 = _int(vals[2]) if len(vals) > 2 else 0
-    tl_made = tl_att = 0
-    if len(vals) > 3 and "/" in vals[3]:
-        m = re.match(r"(\d+)\s*/\s*(\d+)", vals[3])
-        if m:
-            tl_made, tl_att = int(m.group(1)), int(m.group(2))
-    fp = _int(vals[4]) if len(vals) > 4 else 0
-    return pts, t2, t3, tl_made, tl_att, fp
-
-
 # ---------------------------------------------------------------------------
-# Serialization helpers
+# Pending-date resolution
 # ---------------------------------------------------------------------------
 
-def _to_dict(obj):
-    if hasattr(obj, "__dataclass_fields__"):
-        return {k: _to_dict(getattr(obj, k)) for k in obj.__dataclass_fields__}
-    if isinstance(obj, dict):
-        return {k: _to_dict(v) for k, v in obj.items()}
-    if isinstance(obj, (list, tuple)):
-        return [_to_dict(v) for v in obj]
-    return obj
+_PENDING_FILE = "pending_dates.json"
+_PENDING_SCAN_RADIUS = 4  # scan ±N weeks around each pending match's scheduled monday
 
 
-def _write_json(path: Path, data) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(_to_dict(data), ensure_ascii=False, indent=2), encoding="utf-8")
+def _load_pending(out_dir: Path) -> list[dict]:
+    path = out_dir / _PENDING_FILE
+    if not path.exists():
+        return []
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        return []
 
 
-def _write_raw(path: Path, html: str) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(html, encoding="utf-8")
+def _save_pending(out_dir: Path, index_matches: list[dict]) -> None:
+    pending = [
+        {k: m[k] for k in ("home_team_id", "away_team_id", "jornada", "monday")}
+        for m in index_matches
+        if not m.get("starts_at") and m.get("home_team_id") and m.get("away_team_id")
+    ]
+    _write_json(out_dir / _PENDING_FILE, pending)
+    if pending:
+        log.info("Pending dates: %d match(es) saved for next run", len(pending))
 
 
 # ---------------------------------------------------------------------------
 # Orchestration
 # ---------------------------------------------------------------------------
 
-def crawl(group_name: str, out_root: Path, sleep: float, force: bool) -> None:
+def crawl(
+    group_name: str,
+    out_root: Path,
+    sleep: float,
+    force: bool,
+    *,
+    season: str | None = None,
+    category_id: str | None = None,
+    group_id: str | None = None,
+    heading: str | None = None,
+) -> dict:
+    started_at = time.monotonic()
     client = Client(sleep=sleep)
+    cached_calendar_reads = 0
+    cached_week_reads = 0
+    cached_match_reads = 0
+    failed_match_fetches = 0
 
     log.info("Resolving group: %s", group_name)
-    group = resolve_group(client, group_name)
+    group = resolve_group(client, group_name, category_id=category_id, group_id=group_id, heading=heading)
     log.info("→ category_id=%s group_id=%s", group.category_id, group.group_id)
+    resolved_at = time.monotonic()
 
-    out_dir = out_root / _slugify(group.group_name)
-    raw_dir = out_dir / "raw"
-    matches_dir = out_dir / "matches"
+    group_slug = _slugify(group.group_name)
+    # Raw cache lives under the flat legacy path (gitignored — no season subdir needed).
+    raw_dir = out_root / group_slug / "raw"
+
+    # If season was passed explicitly we can set out_dir immediately.
+    # Otherwise we defer until we have mondays_by_jornada (post-calendar-load).
+    out_dir: Path | None = None
+    if season is not None:
+        out_dir = out_root / season / group_slug
+
+    # Also check legacy flat path for an existing group.json (pre-migration run).
+    legacy_dir = out_root / group_slug
+    if out_dir is None and (legacy_dir / "group.json").exists():
+        try:
+            existing = json.loads((legacy_dir / "group.json").read_text(encoding="utf-8"))
+            sj = existing.get("season_jornadas", {})
+            if sj:
+                season = _detect_season(sj)
+                out_dir = out_root / season / group_slug
+                log.info("Season auto-detected from existing group.json: %s", season)
+        except Exception:
+            pass
 
     # Calendar
-    cal_html, calendar = fetch_calendar(client, group)
-    _write_raw(raw_dir / "calendario.html", cal_html)
+    calendar_raw_path = raw_dir / "calendario.html"
+    if calendar_raw_path.exists() and not force:
+        cached_calendar_reads += 1
+        cal_html = calendar_raw_path.read_text(encoding="utf-8")
+        calendar = _parse_calendar(cal_html, group.group_name)
+    else:
+        cal_html, calendar = fetch_calendar(client, group)
+        _write_raw(calendar_raw_path, cal_html)
     log.info("Calendar: %d teams, %d matches across %d jornadas",
              len(calendar.teams), len(calendar.matches),
              len({m.jornada for m in calendar.matches}))
+    calendar_loaded_at = time.monotonic()
 
     # Determine the set of Mondays we need to query
     mondays_by_jornada: dict[int, date] = {}
     for cm in calendar.matches:
         mondays_by_jornada.setdefault(cm.jornada, _ddmmyyyy_to_monday(cm.jornada_date))
+
+    # Auto-detect season from calendar data if still unknown.
+    if out_dir is None:
+        season_jornadas_tmp = {str(j): m.isoformat() for j, m in sorted(mondays_by_jornada.items())}
+        if not season_jornadas_tmp:
+            # No dated jornadas yet (pre-season or empty calendar). Derive the
+            # season from today's date using the same Aug-cutoff logic.
+            today_obj = date.today()
+            year, month = today_obj.year, today_obj.month
+            if month >= 8:
+                season = f"{year}-{(year + 1) % 100:02d}"
+            else:
+                season = f"{year - 1}-{year % 100:02d}"
+            log.warning(
+                "Calendar has no dated jornadas for '%s' — season derived from today's date: %s. "
+                "Pass --season <label> explicitly to override.",
+                group.group_name, season,
+            )
+        else:
+            season = _detect_season(season_jornadas_tmp)
+            log.info("Season detected from calendar jornadas: %s", season)
+        out_dir = out_root / season / group_slug
+
+    matches_dir = out_dir / "matches"
 
     # Build team-id lookups so we can map every entry (weekly or calendar-only)
     # to canonical team_ids.
@@ -691,9 +389,59 @@ def crawl(group_name: str, out_root: Path, sleep: float, force: bool) -> None:
     raw_entries: list[dict] = []
     seen_ids: set[str] = set()
     target_group = _norm(group.group_name)
+
+    # Attempt to resolve pending dates from the previous run before the normal scan.
+    pending = _load_pending(out_dir)
+    if pending:
+        log.info("Resolving %d pending match date(s) from previous run …", len(pending))
+        pending_pairs = {(p["home_team_id"], p["away_team_id"]) for p in pending}
+        weeks_to_scan: set[date] = set()
+        for p in pending:
+            if p.get("monday"):
+                base = date.fromisoformat(p["monday"])
+                for offset in range(-_PENDING_SCAN_RADIUS, _PENDING_SCAN_RADIUS + 1):
+                    weeks_to_scan.add(base + timedelta(weeks=offset))
+        for week in sorted(weeks_to_scan):
+            if not pending_pairs:
+                break
+            raw_path = raw_dir / f"jornada_{week.isoformat()}.html"
+            try:
+                # Always fetch fresh (bypass cache) so we catch newly published actas.
+                html, _ = fetch_week_jornada(client, group.category_id, week)
+                _write_raw(raw_path, html)
+            except Exception as exc:
+                log.warning("Pending scan: week %s: %s", week, exc)
+                continue
+            for g, entry in _parse_week_jornada(html):
+                if g != target_group or not entry.starts_at:
+                    continue
+                home_id = _resolve(entry.home_team, entry.home_logo)
+                away_id = _resolve(entry.away_team, entry.away_logo)
+                key = (home_id, away_id)
+                if key not in pending_pairs:
+                    continue
+                jornada_num = next(
+                    (p["jornada"] for p in pending
+                     if p["home_team_id"] == home_id and p["away_team_id"] == away_id),
+                    0,
+                )
+                log.info("  Resolved: %s vs %s → %s", entry.home_team, entry.away_team, entry.starts_at)
+                raw_entries.append({
+                    "jornada": jornada_num,
+                    "monday": week.isoformat(),
+                    "home_team_id": home_id,
+                    "away_team_id": away_id,
+                    "source": "jornada",
+                    **_to_dict(entry),
+                })
+                if entry.partido_id:
+                    seen_ids.add(entry.partido_id)
+                pending_pairs.discard(key)
+
     for jornada, monday in sorted(mondays_by_jornada.items()):
         raw_path = raw_dir / f"jornada_{monday.isoformat()}.html"
         if raw_path.exists() and not force:
+            cached_week_reads += 1
             html = raw_path.read_text(encoding="utf-8")
         else:
             html, _ = fetch_week_jornada(client, group.category_id, monday)
@@ -764,6 +512,7 @@ def crawl(group_name: str, out_root: Path, sleep: float, force: bool) -> None:
         log.warning("Skipped %d entries with unresolved team_ids", skipped)
     cal_added = sum(1 for e in bucket.values() if e.get("source") == "calendar")
     log.info("Index: %d matches (%d from calendar-only, no acta)", len(bucket), cal_added)
+    index_built_at = time.monotonic()
 
     jornada_entries = sorted(bucket.values(),
                              key=lambda e: (e["jornada"], e.get("monday") or "", e.get("starts_at") or ""))
@@ -772,6 +521,7 @@ def crawl(group_name: str, out_root: Path, sleep: float, force: bool) -> None:
         "group": _to_dict(group),
         "matches": jornada_entries,
     })
+    _save_pending(out_dir, jornada_entries)
 
     # Group metadata
     _write_json(out_dir / "group.json", {
@@ -785,19 +535,151 @@ def crawl(group_name: str, out_root: Path, sleep: float, force: bool) -> None:
     for i, pid in enumerate(sorted(seen_ids), 1):
         raw_path = raw_dir / f"partido_{pid}.html"
         json_path = matches_dir / f"{pid}.json"
-        if json_path.exists() and raw_path.exists() and not force:
+        if json_path.exists() and not force:
+            cached_match_reads += 1
             log.info("[%d/%d] %s (cached)", i, len(seen_ids), pid)
             continue
         log.info("[%d/%d] %s", i, len(seen_ids), pid)
         try:
             html, detail = fetch_match(client, pid)
         except Exception as exc:
+            failed_match_fetches += 1
             log.exception("Failed to fetch partido %s: %s", pid, exc)
+            continue
+        if detail.status not in ("FINALIZADO", "SUSPENDIDO"):
+            log.warning("Skipping in-progress match %s (status=%s)", pid, detail.status)
             continue
         _write_raw(raw_path, html)
         _write_json(json_path, detail)
 
+    finished_at = time.monotonic()
+    log.info(
+        "Requests summary: network_requests=%d cached_calendar=%d cached_weeks=%d cached_matches=%d failed_matches=%d calendar_only=%d timings_s(resolve=%.3f calendar=%.3f index=%.3f detail=%.3f total=%.3f)",
+        client.request_count,
+        cached_calendar_reads,
+        cached_week_reads,
+        cached_match_reads,
+        failed_match_fetches,
+        cal_added,
+        resolved_at - started_at,
+        calendar_loaded_at - resolved_at,
+        index_built_at - calendar_loaded_at,
+        finished_at - index_built_at,
+        finished_at - started_at,
+    )
+    metrics = {
+        "engine": "requests",
+        "network_requests": client.request_count,
+        "cached_calendar": cached_calendar_reads,
+        "cached_weeks": cached_week_reads,
+        "cached_matches": cached_match_reads,
+        "failed_matches": failed_match_fetches,
+        "calendar_only": cal_added,
+        "timings_s": {
+            "resolve": round(resolved_at - started_at, 3),
+            "calendar": round(calendar_loaded_at - resolved_at, 3),
+            "index": round(index_built_at - calendar_loaded_at, 3),
+            "detail": round(finished_at - index_built_at, 3),
+            "total": round(finished_at - started_at, 3),
+        },
+    }
+    _emit_metrics(metrics)
     log.info("Done. Output in %s", out_dir)
+    return metrics
+
+
+def _default_engine() -> str:
+    configured = os.environ.get("BASKETARABA_DEFAULT_ENGINE", "scrapy").strip().lower()
+    return configured if configured in {"requests", "scrapy"} else "scrapy"
+
+
+def _run_engine_subprocess(engine: str, group: str, out: Path, sleep: float, force: bool, verbose: bool) -> dict:
+    command = [sys.executable, str(Path(__file__).resolve()), group, "--engine", engine, "--out", str(out), "--sleep", str(sleep)]
+    if force:
+        command.append("--force")
+    if verbose:
+        command.append("--verbose")
+
+    env = os.environ.copy()
+    env["BASKETARABA_EMIT_METRICS_JSON"] = "1"
+    completed = subprocess.run(command, capture_output=True, text=True, env=env, check=True)
+    lines = completed.stdout.splitlines() + completed.stderr.splitlines()
+    metrics_line = next((line for line in lines if line.startswith("METRICS_JSON: ")), None)
+    if not metrics_line:
+        raise RuntimeError(f"No metrics line found for engine {engine!r}")
+    return json.loads(metrics_line.split(": ", 1)[1])
+
+
+def compare_engines(group_name: str, out_root: Path, sleep: float, force: bool, verbose: bool, metrics_out: Path | None) -> int:
+    requests_metrics = _run_engine_subprocess("requests", group_name, out_root, sleep, force, verbose)
+    scrapy_metrics = _run_engine_subprocess("scrapy", group_name, out_root, sleep, force, verbose)
+    requests_timings = requests_metrics["timings_s"]
+    scrapy_timings = scrapy_metrics["timings_s"]
+    deltas = {
+        "resolve_calendar_total_s": round(
+            scrapy_timings["resolve_and_calendar"] - (requests_timings["resolve"] + requests_timings["calendar"]),
+            3,
+        ),
+        "index_s": round(scrapy_timings["index"] - requests_timings["index"], 3),
+        "detail_s": round(scrapy_timings["detail"] - requests_timings["detail"], 3),
+        "total_s": round(scrapy_timings["total"] - requests_timings["total"], 3),
+        "cached_matches": scrapy_metrics["cached_matches"] - requests_metrics["cached_matches"],
+    }
+
+    print("Engine comparison:")
+    print(
+        "- requests: "
+        f"network_requests={requests_metrics['network_requests']} cached_matches={requests_metrics['cached_matches']} "
+        f"calendar_only={requests_metrics['calendar_only']} total_s={requests_metrics['timings_s']['total']}"
+    )
+    print(
+        "- scrapy: "
+        f"scheduled_network_requests={scrapy_metrics['scheduled_network_requests']} cached_matches={scrapy_metrics['cached_matches']} "
+        f"calendar_only={scrapy_metrics['calendar_only']} retries={scrapy_metrics['retries']} total_s={scrapy_metrics['timings_s']['total']}"
+    )
+    print(
+        "- delta(resolve+calendar_s scrapy-requests): "
+        f"{deltas['resolve_calendar_total_s']}"
+    )
+    print(
+        "- delta(index_s scrapy-requests): "
+        f"{deltas['index_s']}"
+    )
+    print(
+        "- delta(detail_s scrapy-requests): "
+        f"{deltas['detail_s']}"
+    )
+    print(
+        "- delta(total_s scrapy-requests): "
+        f"{deltas['total_s']}"
+    )
+    print(
+        "- delta(cached_matches scrapy-requests): "
+        f"{deltas['cached_matches']}"
+    )
+    if metrics_out is not None:
+        _write_metrics_file(
+            metrics_out,
+            {
+                "requests": requests_metrics,
+                "scrapy": scrapy_metrics,
+                "deltas": deltas,
+            },
+        )
+    metrics_history_dir = os.environ.get("BASKETARABA_METRICS_HISTORY_DIR")
+    if metrics_history_dir:
+        snapshot_path = _write_metrics_snapshot(
+            Path(metrics_history_dir),
+            group_name,
+            "compare",
+            {
+                "requests": requests_metrics,
+                "scrapy": scrapy_metrics,
+                "deltas": deltas,
+            },
+        )
+        log.info("Metrics snapshot written to %s", snapshot_path)
+    return 0
 
 
 # ---------------------------------------------------------------------------
@@ -806,10 +688,23 @@ def crawl(group_name: str, out_root: Path, sleep: float, force: bool) -> None:
 
 def main(argv: Iterable[str] | None = None) -> int:
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    p.add_argument("group", help="Group name, e.g. 'SENIOR MASCULINA 3ª-GRUPO A'")
+    p.add_argument("group", nargs="?", help="Group name, e.g. 'SENIOR MASCULINA 3ª-GRUPO A'")
+    p.add_argument("--list-groups", action="store_true", help="Print available group names as JSON and exit")
+    p.add_argument("--full-season", action="store_true", help="When listing groups, scan all 30 past weeks instead of just the current and previous")
     p.add_argument("--out", type=Path, default=Path("data"), help="Output root directory (default: ./data)")
+    p.add_argument("--engine", choices=("requests", "scrapy"), default=_default_engine(),
+                   help="Crawler engine to use (default: BASKETARABA_DEFAULT_ENGINE or scrapy)")
+    p.add_argument("--compare-engines", action="store_true",
+                   help="Run both engines sequentially and print a compact comparison")
+    p.add_argument("--metrics-out", type=Path, help="Write run metrics to a JSON file")
+    p.add_argument("--metrics-history-dir", type=Path,
+                   help="Write timestamped metrics snapshots under the given root directory")
     p.add_argument("--sleep", type=float, default=0.4, help="Seconds between HTTP requests (default: 0.4)")
+    p.add_argument("--season", default=None, help="Season label, e.g. '2025-26' (auto-detected if omitted)")
     p.add_argument("--force", action="store_true", help="Re-download even if cached files exist")
+    p.add_argument("--category-id", default=None, help="Pre-resolved category ID (skips jornada page)")
+    p.add_argument("--group-id", default=None, help="Pre-resolved group ID (skips dameJornada scan; requires --category-id)")
+    p.add_argument("--heading", default=None, help="Raw h3 heading text for group matching")
     p.add_argument("-v", "--verbose", action="store_true")
     args = p.parse_args(list(argv) if argv is not None else None)
 
@@ -819,7 +714,53 @@ def main(argv: Iterable[str] | None = None) -> int:
         datefmt="%H:%M:%S",
     )
 
-    crawl(args.group, args.out, args.sleep, args.force)
+    if args.list_groups:
+        client = Client(sleep=args.sleep)
+        groups = discover_groups(client, weeks=30 if args.full_season else 2)
+        print(json.dumps(groups, ensure_ascii=False))
+        sys.exit(0)
+
+    if args.group is None:
+        p.error("group is required unless --list-groups is specified")
+
+    log.info("Selected crawler engine: %s", args.engine)
+
+    if args.metrics_history_dir is not None:
+        os.environ["BASKETARABA_METRICS_HISTORY_DIR"] = str(args.metrics_history_dir)
+    else:
+        os.environ.pop("BASKETARABA_METRICS_HISTORY_DIR", None)
+
+    if args.compare_engines:
+        return compare_engines(args.group, args.out, args.sleep, args.force, args.verbose, args.metrics_out)
+
+    if args.engine == "scrapy":
+        from scraper.run import main as scrapy_main
+
+        delegated_argv = [args.group, "--out", str(args.out), "--sleep", str(args.sleep)]
+        if args.force:
+            delegated_argv.append("--force")
+        if args.verbose:
+            delegated_argv.append("--verbose")
+        if args.metrics_out is not None:
+            delegated_argv.extend(["--metrics-out", str(args.metrics_out)])
+        if args.metrics_history_dir is not None:
+            delegated_argv.extend(["--metrics-history-dir", str(args.metrics_history_dir)])
+        if args.category_id is not None:
+            delegated_argv.extend(["--category-id", args.category_id])
+        if args.heading is not None:
+            delegated_argv.extend(["--heading", args.heading])
+        if args.season is not None:
+            delegated_argv.extend(["--season", args.season])
+        return scrapy_main(delegated_argv)
+
+    metrics = crawl(args.group, args.out, args.sleep, args.force,
+                    season=args.season,
+                    category_id=args.category_id, group_id=args.group_id, heading=args.heading)
+    if args.metrics_out is not None:
+        _write_metrics_file(args.metrics_out, metrics)
+    if args.metrics_history_dir is not None:
+        snapshot_path = _write_metrics_snapshot(args.metrics_history_dir, args.group, "requests", metrics)
+        log.info("Metrics snapshot written to %s", snapshot_path)
     return 0
 
 

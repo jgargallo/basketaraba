@@ -48,6 +48,12 @@ body { font-family: 'Inter', system-ui, sans-serif; }
   box-shadow: var(--shadow-card);
   padding: 1rem;
 }
+.card-no-acta {
+  background: var(--ink-50);
+  border-color: var(--ink-100);
+  box-shadow: none;
+  opacity: 0.75;
+}
 
 .kpi {
   background: #fff;
@@ -117,14 +123,14 @@ body { font-family: 'Inter', system-ui, sans-serif; }
 .linkish:hover { color: var(--brand-600); }
 
 .pp-entry {
-  display: flex; align-items: flex-start; gap: 0.75rem;
+  display: flex; align-items: center; gap: 0.75rem;
   padding: 0.5rem 0.75rem; border-radius: 0.5rem;
   border: 1px solid var(--ink-100); margin-bottom: 0.375rem;
 }
 .pp-entry.home { background: rgba(219,234,254,.4); border-color: rgba(191,219,254,.7); }
 .pp-entry.away { background: rgba(243,232,255,.4); border-color: rgba(216,180,254,.7); }
 .pp-entry.neutral { background: var(--ink-50); }
-.pp-time { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.75rem; color: var(--ink-500); width: 4rem; flex-shrink: 0; }
+.pp-time { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.75rem; color: var(--ink-500); white-space: nowrap; flex-shrink: 0; }
 .pp-text { font-size: 0.875rem; }
 .pp-score { margin-left: auto; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.875rem; color: var(--ink-700); }
 

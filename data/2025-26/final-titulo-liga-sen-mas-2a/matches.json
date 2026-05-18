@@ -1,0 +1,27 @@
+{
+  "group": {
+    "category_name": "FINAL TITULO LIGA SEN.MAS.2A",
+    "category_id": "68403787734a8",
+    "group_name": "FINAL TITULO LIGA SEN.MAS.2A",
+    "group_id": "6a01c3d71899b"
+  },
+  "matches": [
+    {
+      "jornada": 1,
+      "monday": "2026-05-11",
+      "home_team_id": "686f9538cca63",
+      "away_team_id": "687fcfa0cc435",
+      "source": "jornada",
+      "partido_id": "6a01cca01d6e5",
+      "home_team": "CAFE IPARRA JOTAKE",
+      "away_team": "MANAOS TOJU B",
+      "home_score": 58,
+      "away_score": 54,
+      "status": "FINALIZADO",
+      "venue": "MENDIZORROTZA",
+      "starts_at": "17/05/2026 16:00",
+      "home_logo": "JOTAKE GASTEIZ S.B..png",
+      "away_logo": "TOJU VITORIA-GASTEIZ.png"
+    }
+  ]
+}

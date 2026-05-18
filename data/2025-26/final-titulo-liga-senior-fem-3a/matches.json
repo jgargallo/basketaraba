@@ -1,0 +1,27 @@
+{
+  "group": {
+    "category_name": "FINAL TITULO LIGA SENIOR FEM 3A",
+    "category_id": "6888a6bf33b2d",
+    "group_name": "FINAL TITULO LIGA SENIOR FEM 3A",
+    "group_id": "6a01c344487a5"
+  },
+  "matches": [
+    {
+      "jornada": 1,
+      "monday": "2026-05-11",
+      "home_team_id": "6861ba52a3bc5",
+      "away_team_id": "685a85a48de1e",
+      "source": "jornada",
+      "partido_id": "6a01c80335bfa",
+      "home_team": "CALASANZ SF",
+      "away_team": "SIBERIA GASTEIZ A",
+      "home_score": 50,
+      "away_score": 36,
+      "status": "FINALIZADO",
+      "venue": "CALASANZ",
+      "starts_at": "17/05/2026 19:30",
+      "home_logo": "CALASANZ.jpg",
+      "away_logo": "SIBERIA GASTEIZ.png"
+    }
+  ]
+}

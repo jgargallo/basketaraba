@@ -1,0 +1,27 @@
+{
+  "group": {
+    "category_name": "FINAL TITULO LIGA SEN.FEM.2A",
+    "category_id": "684037c7bc974",
+    "group_name": "FINAL TITULO LIGA SEN.FEM.2A",
+    "group_id": "6a01c13d3a965"
+  },
+  "matches": [
+    {
+      "jornada": 1,
+      "monday": "2026-05-11",
+      "home_team_id": "6858fbd42a45a",
+      "away_team_id": "6866537813ca5",
+      "source": "jornada",
+      "partido_id": "6a01c2a897978",
+      "home_team": "KANAIA MARIANISTAS",
+      "away_team": "MENDIRIA C.B. A",
+      "home_score": 65,
+      "away_score": 57,
+      "status": "FINALIZADO",
+      "venue": "MARIANISTAS",
+      "starts_at": "16/05/2026 18:00",
+      "home_logo": "CHAMINADE MARIANISTAS A.D..png",
+      "away_logo": "MENDIRIA.png"
+    }
+  ]
+}

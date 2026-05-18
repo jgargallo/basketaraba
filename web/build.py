@@ -1,28 +1,41 @@
 #!/usr/bin/env python3
 """
-Build the static stats website from database.json.
+Build the static stats website from one or more database.json files.
 
 Layout produced under --out (default web/dist):
     index.html          single-page app shell
     styles.css
     app.js
     data/
-        league.json
-        teams/<team_id>.json
-        players/<player_id>.json
-        games/<game_id>.json
+        index.json                          group directory
+        <group_slug>/
+            league.json
+            teams/<team_id>.json
+            players/<player_id>.json
+            games/<game_id>.json
+    assets/
+        logos/<group_slug>/                 team logos
 
 Usage:
     python web/build.py data/senior-masculina-3a-grupo-a/database.json
+    python web/build.py data/a/database.json data/b/database.json
+    python web/build.py --all
 """
 from __future__ import annotations
 
 import argparse
 import json
 import shutil
+import socket
 import sys
 from collections import defaultdict
+from datetime import datetime, timezone
 from pathlib import Path
+import re
+import unicodedata
+from urllib.error import URLError
+from urllib.parse import quote
+from urllib.request import urlopen, Request
 
 
 BASKET_LOGOS_URL = "https://basketaraba.com/actadigital/images/logos/"
@@ -35,11 +48,56 @@ MIN_GAMES_FOR_LEADERS = 3
 # ---------------------------------------------------------------------------
 
 def _team_logo_url(team: dict) -> str | None:
+    local_url = team.get("logo_url")
+    if local_url:
+        return local_url
     fn = team.get("logo_filename")
     if not fn:
         return None
-    from urllib.parse import quote
     return BASKET_LOGOS_URL + quote(fn)
+
+
+def _slugify(value: str) -> str:
+    normalized = unicodedata.normalize("NFKD", value)
+    ascii_only = normalized.encode("ascii", "ignore").decode("ascii")
+    cleaned = re.sub(r"[^a-zA-Z0-9]+", "-", ascii_only.lower()).strip("-")
+    return re.sub(r"-+", "-", cleaned)
+
+
+def _download_logo(url: str, destination: Path) -> None:
+    request = Request(url, headers={"User-Agent": "Mozilla/5.0"})
+    with urlopen(request, timeout=30) as response:
+        destination.write_bytes(response.read())
+
+
+_LOGO_NETWORK_ERRORS = (URLError, socket.error, socket.timeout, ConnectionError, OSError)
+
+
+def _materialize_local_logos(db: dict, out_dir: Path, season: str | None = None) -> None:
+    group_name = db.get("group", {}).get("group_name") or "group"
+    slug = _slugify(group_name)
+    if season:
+        logos_dir = out_dir / "assets" / "logos" / season / slug
+        logo_url_prefix = "/".join(["assets", "logos", season, slug])
+    else:
+        logos_dir = out_dir / "assets" / "logos" / slug
+        logo_url_prefix = "/".join(["assets", "logos", slug])
+    logos_dir.mkdir(parents=True, exist_ok=True)
+
+    for team in db.get("teams", []):
+        remote_url = _team_logo_url(team)
+        logo_filename = team.get("logo_filename")
+        if not remote_url or not logo_filename:
+            team["logo_url"] = None
+            continue
+
+        destination = logos_dir / logo_filename
+        try:
+            _download_logo(remote_url, destination)
+        except _LOGO_NETWORK_ERRORS:
+            team["logo_url"] = None
+            continue
+        team["logo_url"] = "/".join([logo_url_prefix, quote(logo_filename)])
 
 
 def _index_by(items: list[dict], key: str) -> dict[str, dict]:
@@ -105,6 +163,15 @@ def build_league(db: dict) -> dict:
     top_ft = sorted(top_ft, key=lambda r: -(r["ft_pct"] or 0))[:15]
     top_volume_scorers = sorted(eligible, key=lambda r: -r["totals"]["pts"])[:15]
     most_disciplined = sorted(eligible, key=lambda r: r["averages"]["fp"])[:15]
+    most_fp_personal = sorted(eligible, key=lambda r: -r["averages"].get("fp_personal", 0))[:15]
+    most_fp_technical = sorted(
+        [r for r in db["player_season_stats"] if r["totals"].get("fp_technical", 0) > 0],
+        key=lambda r: -r["totals"]["fp_technical"],
+    )[:15]
+    most_fp_anti = sorted(
+        [r for r in db["player_season_stats"] if r["totals"].get("fp_anti", 0) > 0],
+        key=lambda r: -r["totals"]["fp_anti"],
+    )[:15]
 
     leaders = {
         "ppg": [player_card(r, "PPG", r["averages"]["pts"], {"secondary": [
@@ -126,6 +193,15 @@ def build_league(db: dict) -> dict:
         "low_fp": [player_card(r, "FP/GP", r["averages"]["fp"], {"secondary": [
             ("Faltas total", r["totals"]["fp"]), ("GP", r["games_played"])
         ]}) for r in most_disciplined],
+        "fp_personal_pg": [player_card(r, "FP/GP", r["averages"]["fp_personal"], {"secondary": [
+            ("FP total", r["totals"]["fp_personal"]), ("GP", r["games_played"])
+        ]}) for r in most_fp_personal],
+        "fp_technical": [player_card(r, "Téc.", r["totals"]["fp_technical"], {"secondary": [
+            ("GP", r["games_played"])
+        ]}) for r in most_fp_technical],
+        "fp_anti": [player_card(r, "Anti.", r["totals"]["fp_anti"], {"secondary": [
+            ("GP", r["games_played"])
+        ]}) for r in most_fp_anti],
     }
 
     # Schedule: lightweight game list (no log)
@@ -409,70 +485,167 @@ def build_game_views(db: dict) -> dict[str, dict]:
 # Build
 # ---------------------------------------------------------------------------
 
-def build(db_path: Path, out_dir: Path, src_dir: Path) -> None:
-    db = json.loads(db_path.read_text(encoding="utf-8"))
+def _season_from_path(db_path: Path) -> str | None:
+    """Extract season label from data/<season>/<group>/database.json, or None.
 
-    if out_dir.exists():
-        shutil.rmtree(out_dir)
-    out_dir.mkdir(parents=True)
-    (out_dir / "data").mkdir()
-    (out_dir / "data" / "teams").mkdir()
-    (out_dir / "data" / "players").mkdir()
-    (out_dir / "data" / "games").mkdir()
+    Works with both absolute and relative paths; inspects the directory two
+    levels above the file (i.e. db_path.parent.parent.name).
+    """
+    candidate = db_path.resolve().parent.parent.name
+    if re.match(r"^\d{4}-\d{2}$", candidate):
+        return candidate
+    return None
+
+
+def _build_group(db: dict, out_dir: Path, season: str | None = None) -> dict:
+    """Build one group's static subtree. Returns metadata for index.json."""
+    group_slug = _slugify(db["group"]["group_name"])
+    if season:
+        group_dir = out_dir / "data" / season / group_slug
+    else:
+        group_dir = out_dir / "data" / group_slug
+    group_dir.mkdir(parents=True, exist_ok=True)
+    (group_dir / "teams").mkdir(exist_ok=True)
+    (group_dir / "players").mkdir(exist_ok=True)
+    (group_dir / "games").mkdir(exist_ok=True)
+
+    _materialize_local_logos(db, out_dir, season=season)
 
     league = build_league(db)
-    (out_dir / "data" / "league.json").write_text(
+    (group_dir / "league.json").write_text(
         json.dumps(league, ensure_ascii=False), encoding="utf-8"
     )
 
     team_views = build_team_views(db)
     for tid, view in team_views.items():
-        (out_dir / "data" / "teams" / f"{tid}.json").write_text(
+        (group_dir / "teams" / f"{tid}.json").write_text(
             json.dumps(view, ensure_ascii=False), encoding="utf-8"
         )
 
     player_views = build_player_views(db)
     for pid, view in player_views.items():
-        (out_dir / "data" / "players" / f"{pid}.json").write_text(
+        (group_dir / "players" / f"{pid}.json").write_text(
             json.dumps(view, ensure_ascii=False), encoding="utf-8"
         )
 
     game_views = build_game_views(db)
     for gid, view in game_views.items():
-        (out_dir / "data" / "games" / f"{gid}.json").write_text(
+        (group_dir / "games" / f"{gid}.json").write_text(
             json.dumps(view, ensure_ascii=False), encoding="utf-8"
         )
 
-    # Copy static frontend
+    completed = sum(1 for g in db["games"] if g["status"] == "FINALIZADO")
+    return {
+        "season": season,
+        "id": group_slug,
+        "name": db["group"]["group_name"],
+        "built_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "stats": {
+            "teams": len(db["teams"]),
+            "players": len(db["players"]),
+            "games": len(db["games"]),
+            "completed_games": completed,
+        },
+    }
+
+
+def _build_index(groups_meta: list[dict], out_dir: Path) -> None:
+    # Build season-aware structure: {current_season, seasons: {<season>: {label, groups: [...]}}}
+    seasons: dict[str, list[dict]] = {}
+    for meta in groups_meta:
+        s = meta.get("season") or "unknown"
+        seasons.setdefault(s, []).append({
+            "slug": meta["id"],
+            "display_name": meta["name"],
+        })
+
+    sorted_seasons = sorted(seasons.keys(), reverse=True)
+    current_season = sorted_seasons[0] if sorted_seasons else "unknown"
+
+    index = {
+        "current_season": current_season,
+        "seasons": {
+            s: {
+                "label": f"Temporada {s}",
+                "groups": seasons[s],
+            }
+            for s in sorted_seasons
+        },
+        # Legacy flat list for backward compatibility.
+        "groups": groups_meta,
+    }
+    (out_dir / "data" / "index.json").write_text(
+        json.dumps(index, ensure_ascii=False, indent=2),
+        encoding="utf-8",
+    )
+
+
+def _copy_static_files(src_dir: Path, out_dir: Path) -> None:
     for fname in ("index.html", "styles.css", "app.js"):
         src = src_dir / fname
         if not src.exists():
             raise FileNotFoundError(f"Missing frontend source: {src}")
         shutil.copy2(src, out_dir / fname)
 
-    print(
-        f"Built site in {out_dir}\n"
-        f"  league: 1\n"
-        f"  teams: {len(team_views)}\n"
-        f"  players: {len(player_views)}\n"
-        f"  games: {len(game_views)}"
-    )
-
 
 def main() -> int:
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    p.add_argument("database", type=Path, help="Path to database.json produced by stats.py")
+    p.add_argument("databases", nargs="*", type=Path, metavar="database",
+                   help="Path(s) to database.json file(s) produced by stats.py")
+    p.add_argument("--all", action="store_true", dest="all_groups",
+                   help="Autodiscover all data/*/database.json files in the current directory")
     p.add_argument("--out", type=Path, default=Path("web/dist"),
                    help="Output directory (default: web/dist)")
     p.add_argument("--src", type=Path, default=Path("web/src"),
                    help="Frontend source directory (default: web/src)")
     args = p.parse_args()
 
-    if not args.database.exists():
-        print(f"database.json not found: {args.database}", file=sys.stderr)
+    if args.all_groups:
+        # Support both data/<season>/<group>/database.json and legacy data/<group>/database.json
+        db_paths = sorted(Path("data").glob("*/*/database.json"))
+        if not db_paths:
+            # Fall back to legacy flat layout
+            db_paths = sorted(Path("data").glob("*/database.json"))
+        if not db_paths:
+            print("No data/*/database.json or data/*/*/database.json files found.", file=sys.stderr)
+            return 1
+    else:
+        db_paths = args.databases
+
+    if not db_paths:
+        p.error("Provide at least one database.json path or use --all")
+
+    missing = [db for db in db_paths if not db.exists()]
+    if missing:
+        for m in missing:
+            print(f"Not found: {m}", file=sys.stderr)
         return 1
 
-    build(args.database, args.out, args.src)
+    # Clean output dir and create skeleton once
+    if args.out.exists():
+        shutil.rmtree(args.out)
+    args.out.mkdir(parents=True)
+    (args.out / "data").mkdir()
+
+    groups_meta = []
+    for db_path in db_paths:
+        season = _season_from_path(db_path)
+        db = json.loads(db_path.read_text(encoding="utf-8"))
+        meta = _build_group(db, args.out, season=season)
+        groups_meta.append(meta)
+        season_label = f"{season}/" if season else ""
+        print(
+            f"  [{season_label}{meta['id']}] "
+            f"teams={meta['stats']['teams']} "
+            f"players={meta['stats']['players']} "
+            f"games={meta['stats']['games']} "
+            f"completed={meta['stats']['completed_games']}"
+        )
+
+    _build_index(groups_meta, args.out)
+    _copy_static_files(args.src, args.out)
+
+    print(f"\nBuilt {len(groups_meta)} group(s) → {args.out}")
     return 0
 
 
